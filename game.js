@@ -338,10 +338,13 @@ const Snd = {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     try {
       this.ctx = new AC();
-      this.master = this.ctx.createGain(); this.master.gain.value = this.muted ? 0 : 0.7; this.master.connect(this.ctx.destination);
+      this.master = this.ctx.createGain(); this.master.gain.value = this.muted ? 0 : 0.7;
+      // 音量を測れるように出口に計測器を挟む（検証用。音には影響しない）
+      this.an = this.ctx.createAnalyser(); this.an.fftSize = 2048; this.master.connect(this.an); this.an.connect(this.ctx.destination);
       this.bgm = this.ctx.createGain(); this.bgm.gain.value = 0.28; this.bgm.connect(this.master);
       const len = this.ctx.sampleRate; this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      this.bgm.gain.value = 0.0001; this.switchAt = this.ctx.currentTime;
     } catch (e) { this.ctx = null }
   },
   setMute(m) { this.muted = m; if (this.master) this.master.gain.value = m ? 0 : 0.7 },
@@ -358,15 +361,67 @@ const Snd = {
     s.connect(f); f.connect(g); g.connect(dest || this.master); s.start(t0, Math.random() * 0.5); s.stop(t0 + dur + 0.02);
   },
   now() { return this.ctx ? this.ctx.currentTime : 0 },
+  level() { if (!this.an) return 0; const d = new Float32Array(this.an.fftSize); this.an.getFloatTimeDomainData(d); let m = 0; for (const v of d) m = Math.max(m, Math.abs(v)); return m },
   mtof: m => 440 * Math.pow(2, (m - 69) / 12),
-  // 16分のループ。クイズ番組らしい跳ねたベースと金管っぽい和音
-  tick() {
-    if (!this.ctx || !this.bgmOn) return;
-    const spb = 60 / this.tempo / 4;
-    if (this.next < this.ctx.currentTime) this.next = this.ctx.currentTime + 0.05;
-    while (this.next < this.ctx.currentTime + 0.25) { this.playStep(this.step, this.next); this.next += spb; this.step++ }
+  // ---- BGM。場面ごとに曲を切り替える（16分音符の格子で鳴らす）
+  track: null, want: null, switchAt: 0, played: {},
+  TEMPO: { title: 150, lobby: 104, quiz: 138, win: 126, lose: 92 },
+  mark(n) { this.played[n] = (this.played[n] || 0) + 1 },
+  setTrack(name) {
+    if (this.want === name && (this.track === name || this.switchAt)) return;
+    this.want = name;
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime, g = this.bgm.gain;
+    g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.linearRampToValueAtTime(0.0001, now + 0.25);
+    this.switchAt = now + 0.27;
   },
-  playStep(i, t0) {
+  tick() {
+    if (!this.ctx) return;
+    const c = this.ctx;
+    if (this.switchAt && c.currentTime >= this.switchAt) {
+      this.track = this.want; this.step = 0; this.next = c.currentTime + 0.05; this.switchAt = 0;
+      const g = this.bgm.gain; g.cancelScheduledValues(c.currentTime); g.setValueAtTime(0.0001, c.currentTime); g.linearRampToValueAtTime(0.26, c.currentTime + 0.35);
+      if (this.track) this.mark('bgm:' + this.track);
+    }
+    if (!this.track || this.switchAt) return;
+    const spb = 60 / this.TEMPO[this.track] / 4;
+    if (this.next < c.currentTime) this.next = c.currentTime + 0.05;
+    while (this.next < c.currentTime + 0.25) { this['p_' + this.track](this.step, this.next); this.next += spb; this.step++ }
+  },
+  // 楽器
+  kick(t) { this.tone(150, t, 0.16, 'sine', 0.7, this.bgm, 42) },
+  snare(t, v = 0.22) { this.noise(t, 0.12, v, 1800, 'bandpass', this.bgm); this.tone(190, t, 0.06, 'triangle', 0.15, this.bgm) },
+  hat(t, v = 0.06) { this.noise(t, 0.03, v, 8000, 'highpass', this.bgm) },
+  bass(n, t, dur = 0.18, vol = 0.45, type = 'triangle') { this.tone(this.mtof(n), t, dur, type, vol, this.bgm) },
+  vibe(n, t, vol = 0.08) { this.tone(this.mtof(n), t, 0.9, 'sine', vol, this.bgm); this.tone(this.mtof(n) * 4, t, 0.22, 'sine', vol * 0.25, this.bgm) },
+  brass(n, t, dur, vol = 0.07, dest) {
+    if (!this.ctx) return; const c = this.ctx, f = c.createBiquadFilter(), g = c.createGain();
+    f.type = 'lowpass'; f.Q.value = 2; f.frequency.setValueAtTime(500, t); f.frequency.linearRampToValueAtTime(2600, t + 0.05); f.frequency.exponentialRampToValueAtTime(900, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.setValueAtTime(vol, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    for (const d of [-7, 7]) { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = this.mtof(n); o.detune.value = d; o.connect(f); o.start(t); o.stop(t + dur + 0.02) }
+    f.connect(g); g.connect(dest || this.bgm);
+  },
+  // タイトル: 金管が鳴るクイズ番組のテーマ（C - Am - F - G）
+  p_title(i, t) {
+    const bar = Math.floor(i / 16) % 4, s = i % 16, ph = Math.floor(i / 64) % 2;
+    const root = [36, 33, 41, 43][bar], ch = [[60, 64, 67], [57, 60, 64], [57, 60, 65], [55, 59, 62]][bar];
+    if (s === 0 || s === 8) this.kick(t); if (s === 4 || s === 12) this.snare(t); if (s % 2 === 0) this.hat(t, s % 4 === 2 ? 0.08 : 0.04);
+    if (s % 4 === 0) this.bass(root, t, 0.16); if (s % 4 === 2) this.bass(root + 12, t, 0.12, 0.35);
+    if ((bar % 2 === 0 && (s === 0 || s === 3 || s === 6)) || (bar % 2 === 1 && (s === 10 || s === 12))) for (const n of ch) this.brass(n, t, 0.16, 0.045);
+    const mel = [[72, -1, 74, 76, -1, 79, -1, 76], [76, -1, 74, 72, -1, 69, -1, 72], [72, -1, 74, 77, -1, 81, -1, 79], [79, 77, 76, 74, -1, 71, -1, -1]];
+    if (ph === 1 && s % 2 === 0) { const n = mel[bar][s / 2]; if (n > 0) this.brass(n, t, 0.15, 0.05) }
+  },
+  // 入力・名鑑・表: 待合室のような落ち着いた曲（Fmaj7 - Em7 - Dm7 - G7）
+  p_lobby(i, t) {
+    const bar = Math.floor(i / 16) % 4, s = i % 16;
+    const root = [41, 40, 38, 43][bar], ch = [[57, 60, 64, 65], [55, 59, 62, 64], [53, 57, 60, 64], [53, 55, 59, 62]][bar];
+    if (s === 0) for (const n of ch) this.vibe(n, t, 0.035);
+    if (s === 6 || s === 10 || s === 14) this.vibe(ch[(s / 2 + bar) % 4] + 12, t, 0.05);
+    if (s === 0) this.bass(root, t, 0.5, 0.35, 'sine'); if (s === 10) this.bass(root + 7, t, 0.3, 0.3, 'sine');
+    if (s % 2 === 0) this.hat(t, 0.025); if (s === 12) this.tone(1200, t, 0.03, 'square', 0.03, this.bgm);
+  },
+  // 試合: 跳ねたベースと金管っぽい和音
+  p_quiz(i, t0) {
     const bar = Math.floor(i / 16) % 4, s = i % 16;
     const roots = [48, 53, 55, 48], chords = [[60, 64, 67], [60, 65, 69], [59, 62, 67], [60, 64, 67]];
     const bassPat = [0, 0, -1, 7, 0, -1, 12, -1, 0, 0, -1, 7, 10, -1, 12, 7];
@@ -376,16 +431,73 @@ const Snd = {
     if (s === 0 || s === 8) this.tone(90, t0, 0.12, 'sine', 0.5, this.bgm, 40);
     if (s === 4 || s === 12) this.noise(t0, 0.09, 0.18, 1800, 'bandpass', this.bgm);
     const mel = [[72, -1, 76, -1, 79, -1, 76, 74], [77, -1, 76, -1, 74, -1, 72, -1], [74, -1, 71, -1, 74, 76, 77, -1], [76, -1, 72, -1, 72, -1, -1, -1]];
-    if (s % 2 === 0 && bar < 4) { const n = mel[bar][s / 2]; if (n > 0 && (Math.floor(i / 64) % 2 === 1)) this.tone(this.mtof(n), t0, 0.16, 'square', 0.045, this.bgm) }
+    if (s % 2 === 0) { const n = mel[bar][s / 2]; if (n > 0 && (Math.floor(i / 64) % 2 === 1)) this.tone(this.mtof(n), t0, 0.16, 'square', 0.045, this.bgm) }
   },
+  // 優勝・勝利: 堂々とした凱旋の曲（C - F - G - C）
+  p_win(i, t) {
+    const bar = Math.floor(i / 16) % 4, s = i % 16;
+    const root = [36, 41, 43, 36][bar], ch = [[60, 64, 67], [60, 65, 69], [59, 62, 67], [60, 64, 67]][bar];
+    if (s === 0) for (const n of ch) this.brass(n, t, 0.9, 0.04);
+    if (s === 0 || s === 8) this.kick(t); if (s === 4 || s === 12) this.snare(t, 0.18); if (s % 2 === 0) this.hat(t, 0.05);
+    if (bar === 3 && s >= 12) this.snare(t, 0.1 + (s - 12) * 0.04);
+    if (s % 4 === 0) this.bass(root, t, 0.2); if (s % 4 === 2) this.bass(root + 7, t, 0.14, 0.3);
+    const mel = [[67, -1, 72, -1, 76, -1, 79, -1], [77, -1, 76, -1, 74, -1, 72, -1], [74, -1, 76, -1, 77, -1, 79, -1], [84, -1, -1, -1, 79, -1, -1, -1]];
+    if (s % 2 === 0) { const n = mel[bar][s / 2]; if (n > 0) this.brass(n, t, s / 2 === 0 && bar === 3 ? 0.6 : 0.22, 0.055) }
+  },
+  // 敗退: トボけたワルツ（3拍子。1小節=12マス）
+  p_lose(i, t) {
+    const bar = Math.floor(i / 12) % 4, s = i % 12;
+    const root = [38, 33, 38, 33][bar], ch = [[62, 65, 69], [61, 64, 67], [62, 65, 69], [61, 64, 67]][bar];
+    if (s === 0) this.bass(root, t, 0.3, 0.4, 'square');
+    if (s === 4 || s === 8) for (const n of ch) this.tone(this.mtof(n - 12), t, 0.1, 'triangle', 0.08, this.bgm);
+    const mel = [[74, -1, 73, 72, -1, -1], [71, -1, 70, 69, -1, -1], [74, -1, 76, 77, -1, 74], [73, -1, -1, 69, -1, -1]];
+    if (s % 2 === 0) { const n = mel[bar][s / 2]; if (n > 0) this.tone(this.mtof(n), t, 0.22, 'square', 0.04, this.bgm) }
+  },
+  // ---- 効果音
+  ui() { const t = this.now(); this.tone(700, t, 0.06, 'triangle', 0.2, null, 1100) },
+  key() { this.tone(1700 + Math.random() * 500, this.now(), 0.02, 'square', 0.03) },
+  whoosh() {
+    if (!this.ctx) return; this.mark('whoosh'); const c = this.ctx, t = c.currentTime, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = this.noiseBuf; f.type = 'bandpass'; f.Q.value = 3; f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(3500, t + 0.35);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    s.connect(f); f.connect(g); g.connect(this.master); s.start(t); s.stop(t + 0.45);
+  },
+  clap() { this.mark('clap'); const t = this.now(); for (let i = 0; i < 28; i++) this.noise(t + Math.random() * 0.9, 0.05, 0.06 + Math.random() * 0.08, 1400 + Math.random() * 1600, 'bandpass') },
+  // 客席の「えぇ〜」。ノコギリ波を声の帯域に絞って音程を下げる
+  groan() {
+    if (!this.ctx) return; this.mark('groan'); const c = this.ctx, t = c.currentTime;
+    for (const [f0, f1, fm] of [[235, 165, 750], [275, 190, 1150], [205, 150, 650]]) {
+      const o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f0 * 1.04, t + 0.15); o.frequency.exponentialRampToValueAtTime(f1, t + 0.8);
+      f.type = 'bandpass'; f.Q.value = 5; f.frequency.value = fm;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+      o.connect(f); f.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.9);
+    }
+  },
+  // 負けた時の「パッパッパッパー」
+  wahwah() {
+    if (!this.ctx) return; this.mark('wahwah'); const c = this.ctx, t0 = c.currentTime;
+    [[58, 0, 0.32], [57, 0.38, 0.32], [56, 0.76, 0.32], [55, 1.14, 1.1]].forEach(([n, d, dur], k) => {
+      const t = t0 + d, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+      o.type = 'sawtooth'; o.frequency.value = this.mtof(n);
+      if (k === 3) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 6; lg.gain.value = 6; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + dur) }
+      f.type = 'lowpass'; f.frequency.setValueAtTime(400, t); f.frequency.linearRampToValueAtTime(1400, t + 0.08); f.frequency.linearRampToValueAtTime(600, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(f); f.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + 0.02);
+    });
+  },
+  // 司会のピコピコ声
+  talk(n) { const t = this.now(), k = Math.min(6, Math.max(2, Math.ceil(n / 5))); for (let i = 0; i < k; i++) this.tone(480 + Math.random() * 220, t + i * 0.07, 0.05, 'square', 0.045) },
+  // 「デデン」
+  dedden() { this.mark('dedden'); const t = this.now(); this.brass(43, t, 0.16, 0.22, this.master); this.brass(48, t + 0.2, 0.45, 0.26, this.master); this.tone(70, t + 0.2, 0.3, 'sine', 0.5) },
   buzz() { const t0 = this.now(); this.tone(880, t0, 0.09, 'square', 0.22); this.tone(1320, t0 + 0.07, 0.22, 'square', 0.22) },
-  ok() { const t0 = this.now(); this.tone(1318.5, t0, 0.35, 'sine', 0.45); this.tone(1046.5, t0 + 0.28, 0.6, 'sine', 0.45) },
-  ng() { const t0 = this.now(); this.tone(150, t0, 0.24, 'sawtooth', 0.32); this.tone(150, t0 + 0.3, 0.45, 'sawtooth', 0.32) },
+  ok() { this.mark('ok'); const t0 = this.now(); this.tone(1318.5, t0, 0.35, 'sine', 0.45); this.tone(1046.5, t0 + 0.28, 0.6, 'sine', 0.45) },
+  ng() { this.mark('ng'); const t0 = this.now(); this.tone(150, t0, 0.24, 'sawtooth', 0.32); this.tone(150, t0 + 0.3, 0.45, 'sawtooth', 0.32) },
   type() { this.tone(2200, this.now(), 0.015, 'square', 0.025) },
-  sting() { const t0 = this.now(); this.tone(392, t0, 0.12, 'square', 0.18); this.tone(523.3, t0 + 0.12, 0.3, 'square', 0.18) },
+  sting() { this.mark('sting'); const t0 = this.now(); this.tone(392, t0, 0.12, 'square', 0.18); this.tone(523.3, t0 + 0.12, 0.3, 'square', 0.18) },
   event() { const t0 = this.now(); [659, 587, 523, 440].forEach((f, i) => this.tone(f, t0 + i * 0.07, 0.1, 'triangle', 0.25)) },
-  laugh() { const t0 = this.now(); for (let i = 0; i < 6; i++) this.noise(t0 + i * 0.11, 0.09, 0.12, 900 + Math.random() * 500, 'bandpass') },
-  fanfare() { const t0 = this.now(); [[523, 0], [659, .14], [784, .28], [1046, .42], [784, .7], [1046, .84]].forEach(([f, d]) => { this.tone(f, t0 + d, d > .8 ? .9 : .2, 'sawtooth', 0.12); this.tone(f / 2, t0 + d, d > .8 ? .9 : .2, 'square', 0.08) }); this.noise(t0 + 0.8, 1.6, 0.25, 800, 'bandpass') },
+  laugh() { this.mark('laugh'); const t0 = this.now(); for (let i = 0; i < 6; i++) this.noise(t0 + i * 0.11, 0.09, 0.12, 900 + Math.random() * 500, 'bandpass') },
+  fanfare() { this.mark('fanfare'); const t0 = this.now(); [[523, 0], [659, .14], [784, .28], [1046, .42], [784, .7], [1046, .84]].forEach(([f, d]) => { this.tone(f, t0 + d, d > .8 ? .9 : .2, 'sawtooth', 0.12); this.tone(f / 2, t0 + d, d > .8 ? .9 : .2, 'square', 0.08) }); this.noise(t0 + 0.8, 1.6, 0.25, 800, 'bandpass') },
   sad() { const t0 = this.now(); [523, 494, 466, 440].forEach((f, i) => this.tone(f, t0 + i * 0.28, 0.4, 'triangle', 0.22)) },
   curtain() { const t0 = this.now(); this.noise(t0, 1.0, 0.18, 600, 'lowpass') },
   slide() { this.tone(1500, this.now(), 0.7, 'sine', 0.3, null, 180) },
@@ -397,7 +509,8 @@ const Snd = {
 // ---------- 状態
 const S = { mode: 'cup', me: null, uniB: null, cup: null, speed: 1, skip: false, busy: false, vs: null, lastResult: null };
 const views = ['vTitle', 'vEntry', 'vProfile', 'vBracket', 'studio', 'vResult', 'howto'];
-function show(id) { for (const v of views) $('#' + v).hidden = v !== id; window.scrollTo(0, 0); S.view = id; $('#bLang').hidden = !['vTitle', 'vEntry', 'vProfile', 'howto'].includes(id) }
+const VIEW_TRACK = { vTitle: 'title', howto: 'title', vEntry: 'lobby', vProfile: 'lobby', vBracket: 'lobby', studio: 'quiz' };
+function show(id) { for (const v of views) $('#' + v).hidden = v !== id; window.scrollTo(0, 0); S.view = id; if (VIEW_TRACK[id]) Snd.setTrack(VIEW_TRACK[id]); else if (id === 'vResult') Snd.setTrack(null); $('#bLang').hidden = !['vTitle', 'vEntry', 'vProfile', 'howto'].includes(id) }
 
 function applyTexts() {
   document.documentElement.lang = lang;
@@ -521,6 +634,7 @@ function finishMatch(cup, m, res) {
 }
 function renderBracket() {
   const cup = S.cup;
+  Snd.whoosh();
   let html = '';
   for (let R = 0; R < 3; R++) {
     const ms = cup.rounds[R];
@@ -585,7 +699,7 @@ function setExpr(i, u, e) { const el = $('#ava' + i); if (el) el.innerHTML = ava
 function setPips(score, target) {
   for (const i of [0, 1]) { $('#pips' + i).innerHTML = Array.from({ length: target }, (_, k) => `<i class="${k < score[i] ? 'on' : ''}"></i>`).join(''); $('#scn' + i).textContent = score[i] }
 }
-function mc(text) { $('#mcLine').innerHTML = `<div><small>${t('mc')}</small>${esc(text)}</div>` }
+function mc(text) { if (!S.skip) Snd.talk([...text].length); $('#mcLine').innerHTML = `<div><small>${t('mc')}</small>${esc(text)}</div>` }
 function bubble(i, text) { const b = $('#bub' + i); if (!b) return; b.textContent = text; b.classList.toggle('on', !!text) }
 function judgeMark(ok) {
   $('#judgeSvg').innerHTML = ok
@@ -605,14 +719,14 @@ async function playMatch(A, B, res, opt) {
   $('#qNum').textContent = ''; $('#qText').textContent = ''; $('#qAns').textContent = ''; $('#evLine').textContent = '';
   $('#qRound').textContent = (S.mode === 'vs' ? '' : t('rounds')[opt.round] + ' / ') + t('firstTo', { n: target });
   $('#bSkip').disabled = false;
-  Snd.bgmOn = true;
+  Snd.setTrack('quiz');
   if (opt.final) { mc(t('mcFinal')); Snd.drum(1.4); await wait(1500) }
   for (let li = 0; li < res.log.length; li++) {
     const e = res.log[li];
     if (S.skip) { if (e.score) score = e.score; continue }
     switch (e.k) {
       case 'intro':
-        mc(t('mcIntro', { a: A.name, b: B.name, n: target })); await wait(1700); break;
+        mc(t('mcIntro', { a: A.name, b: B.name, n: target })); Snd.dedden(); await wait(1700); break;
       case 'event':
         $('#evLine').textContent = t('ev.' + e.type, { a: P[e.who].name }); Snd.event();
         if (e.type === 'sleep' || e.type === 'phone') setExpr(e.who, P[e.who], e.type === 'sleep' ? 'sleep' : 'shock');
@@ -643,10 +757,10 @@ async function playMatch(A, B, res, opt) {
         bubble(e.who, e.text); setExpr(e.who, P[e.who], 'think'); await wait(1150); break;
       case 'judge':
         score = e.score; judgeMark(e.ok);
-        if (e.ok) { Snd.ok(); mc(t('mcOk')); setExpr(e.who, P[e.who], 'happy'); setExpr(1 - e.who, P[1 - e.who], 'sad'); $('#qAns').textContent = '' }
+        if (e.ok) { Snd.ok(); Snd.clap(); mc(t('mcOk')); setExpr(e.who, P[e.who], 'happy'); setExpr(1 - e.who, P[1 - e.who], 'sad'); $('#qAns').textContent = '' }
         else {
           const prev = res.log[li - 1];
-          Snd.ng(); mc(prev && prev.tsk ? t('mcNg') + ' ' + prev.tsk : t('mcNg')); setExpr(e.who, P[e.who], 'sad');
+          Snd.ng(); if (!(prev && prev.laugh)) setTimeout(() => Snd.groan(), 250); mc(prev && prev.tsk ? t('mcNg') + ' ' + prev.tsk : t('mcNg')); setExpr(e.who, P[e.who], 'sad');
           if (prev && prev.laugh) { $('#evLine').textContent = t('laugh'); Snd.laugh() }
         }
         setPips(score, target); await wait(e.ok ? 900 : 1600);
@@ -688,11 +802,10 @@ async function playMatch(A, B, res, opt) {
     $('#ebSub').textContent = `${P[meIdx].name} ${score[meIdx]} - ${score[1 - meIdx]} ${P[1 - meIdx].name}`;
     ban.className = 'endban on ' + (won ? (champ ? 'champ' : 'win') : 'lose');
   }
-  if (P[end.winner] === S.me || S.mode === 'vs') Snd.fanfare(); else Snd.sad();
+  if (P[end.winner] === S.me || S.mode === 'vs') Snd.fanfare(); else Snd.wahwah();
   if (champ) confetti(3.5);
   await wait(wasSkip ? 1800 : 2800);
   ban.className = 'endban';
-  Snd.bgmOn = false;
 }
 
 // ---------- 結果
@@ -775,10 +888,10 @@ async function revealResult(kind, pre) {
   const put = async (sel, cls = 'in', ms = 170) => { const el = $(sel); if (el) el.classList.add(cls); await sleep(ms) };
   await put('#rPre'); await put('#rEmb', 'in', 240); await put('#rName', 'in', 260);
   if (win) {
-    await put('#rRank', 'slam', 0); Snd.fanfare(); confetti(4.5); document.body.classList.add('party');
+    await put('#rRank', 'slam', 0); Snd.fanfare(); Snd.clap(); setTimeout(() => { if (id === revealId) Snd.setTrack('win') }, 1600); confetti(4.5); document.body.classList.add('party');
     setTimeout(() => document.body.classList.remove('party'), 4000);
   } else {
-    await put('#rRank', 'drop', 0); Snd.slide();
+    await put('#rRank', 'drop', 0); Snd.slide(); setTimeout(() => { if (id === revealId) { Snd.wahwah(); setTimeout(() => { if (id === revealId) Snd.setTrack('lose') }, 2600) } }, 900);
     setTimeout(() => { if (id !== revealId) return; const w = $('#rWrap'); w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake'); Snd.bonk() }, 520);
   }
   await sleep(850); if (id !== revealId) return;
@@ -922,7 +1035,10 @@ function flipRes(r) {
 }
 
 function bind() {
-  const on = (sel, fn) => $(sel).addEventListener('click', e => { Snd.init(); fn(e) });
+  const on = (sel, fn) => $(sel).addEventListener('click', e => { Snd.init(); Snd.ui(); fn(e) });
+  // 最初にどこかを触った時点で音を有効にする（ブラウザは操作前に音を出させない）
+  document.addEventListener('pointerdown', () => Snd.init());
+  for (const id of ['#in1', '#in2']) $(id).addEventListener('keydown', () => { Snd.init(); Snd.key() });
   on('#bCup', () => { show('vEntry'); setupEntry('cup'); setTimeout(() => $('#in1').focus(), 50) });
   on('#bVs', () => { show('vEntry'); setupEntry('vs'); setTimeout(() => $('#in1').focus(), 50) });
   on('#bHow', () => show('howto'));
@@ -976,6 +1092,6 @@ try {
   if (a && b) { show('vEntry'); setupEntry('vs'); $('#in1').value = stripSuffix(a); $('#in2').value = stripSuffix(b); updatePreview() }
   else if (u) { show('vEntry'); setupEntry('cup'); $('#in1').value = stripSuffix(u); updatePreview() }
 } catch (e) {}
-window.qk = { S, T, vsSim, fullName, makeUni, simMatch, hash, flipRes, setLang: l => { lang = l; applyTexts() }, D };
+window.qk = { S, T, vsSim, fullName, Snd, makeUni, simMatch, hash, flipRes, setLang: l => { lang = l; applyTexts() }, D };
 window.__qkReady = true;
 })();

@@ -248,9 +248,41 @@ await t('画面上でも近畿大学で大会に出ると優勝する', async ()
   const r = await p.textContent('#rRank'); expect(r === '優勝', r)
   await p.waitForTimeout(2600); await p.screenshot({ path: ROOT + '/shots/06c-kindai-mid.png' }); await p.waitForTimeout(2000); await p.screenshot({ path: ROOT + '/shots/06b-kindai.png', fullPage: true }); return r
 })
+await t('音: 場面ごとにBGMが切り替わり、正解・誤答・拍手・えぇ〜・結果の音が鳴っている', async () => {
+  const r = await p.evaluate(() => ({ played: qk.Snd.played, state: qk.Snd.ctx && qk.Snd.ctx.state }))
+  // 誤答のあとは「えぇ〜」か、会場が爆笑した時は笑い声のどちらかが鳴る
+  const need = ['bgm:lobby', 'bgm:quiz', 'ok', 'clap', 'dedden', 'whoosh', 'sting']
+  const miss = need.filter(k => !r.played[k]); if (r.played.ng && !r.played.groan && !r.played.laugh) miss.push('groan|laugh')
+  const endBgm = r.played['bgm:win'] || r.played['bgm:lose']
+  expect(r.state === 'running' && miss.length === 0 && endBgm, JSON.stringify({ miss, endBgm, state: r.state }))
+  return Object.keys(r.played).join(',')
+})
+await t('音: 効果音を1つずつ鳴らしても例外が出ず、音が出る', async () => {
+  const r = await p.evaluate(async () => {
+    const out = {}
+    for (const k of ['ui', 'key', 'whoosh', 'clap', 'groan', 'wahwah', 'dedden', 'buzz', 'ok', 'ng', 'laugh', 'fanfare', 'curtain', 'slide', 'bonk', 'stamp']) {
+      try { qk.Snd[k](8); let mx = 0; for (let i = 0; i < 6; i++) { await new Promise(r => setTimeout(r, 40)); mx = Math.max(mx, qk.Snd.level()) } out[k] = +mx.toFixed(3) } catch (e) { out[k] = 'ERR ' + e.message }
+    }
+    return out
+  })
+  const bad = Object.entries(r).filter(([k, v]) => typeof v !== 'number' || v < 0.005)
+  expect(bad.length === 0, JSON.stringify(bad)); return r
+})
+await t('音: タイトルに戻るとタイトル曲になり、実際に音が出ている（出口の振幅）', async () => {
+  await p.click('#bTop'); await p.waitForTimeout(1500)
+  const r = await p.evaluate(async () => { let mx = 0; for (let i = 0; i < 20; i++) { mx = Math.max(mx, qk.Snd.level()); await new Promise(r => setTimeout(r, 50)) } return { track: qk.Snd.track, mx } })
+  expect(r.track === 'title' && r.mx > 0.01, JSON.stringify(r)); return r
+})
+await t('音: ミュートで出口の振幅が0になる', async () => {
+  await p.click('#bMute'); await p.waitForTimeout(400)
+  const mx = await p.evaluate(async () => { let mx = 0; for (let i = 0; i < 10; i++) { mx = Math.max(mx, qk.Snd.level()); await new Promise(r => setTimeout(r, 50)) } return mx })
+  await p.click('#bMute')
+  expect(mx < 0.0005, 'level ' + mx); return { mx }
+})
 // ---------- 対決モード
 await t('2校対決: 2つ入れないと押せず、試合を経て勝者が出る', async () => {
-  await p.click('#bTop'); await p.click('#bVs')
+  if (await p.isVisible('#bTop')) await p.click('#bTop')
+  await p.click('#bVs')
   await p.fill('#in1', '北の大学'); expect(await p.isDisabled('#bEntry'), 'enabled with one name')
   await p.fill('#in2', '南の大学'); await p.click('#bEntry')
   await p.waitForSelector('#vProfile:not([hidden])'); expect(await p.isVisible('#pCard2'), 'card2 hidden')

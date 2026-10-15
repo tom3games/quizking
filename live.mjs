@@ -17,6 +17,7 @@ for (const [name, bt, opts] of [['chromium', chromium, {}], ['webkit', webkit, {
   out.push(`${name}: winner=${rank} og=${og} errors=${errs.length ? errs.join(' | ') : 'none'}`)
   await b.close()
 }
+if (process.env.SKIPGH) { console.log(out.join('\n')); process.exit(0) }
 // ログアウト状態でリポジトリ・更新履歴・組織ページに個人のIDが出ていないか
 const b = await chromium.launch(), p = await b.newPage()
 for (const u of ['https://github.com/tom3games/quizking', 'https://github.com/tom3games/quizking/activity', 'https://github.com/tom3games/quizking/commits/main', 'https://github.com/tom3games', 'https://github.com/orgs/tom3games/people']) {
