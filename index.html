@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>大学生クイズ王</title>
+<meta name="description" content="大学名を入れるだけで、全日本大学生クイズ王決定戦に出場。偏差値も能力も名前で決まる。あとは早押しクイズが勝手に進む。">
+<meta name="theme-color" content="#101538">
+<meta property="og:type" content="website">
+<meta property="og:title" content="大学生クイズ王">
+<meta property="og:description" content="大学名を入れるだけで早押しクイズ大会に出場。偏差値も能力も名前で決まる。">
+<meta property="og:image" content="https://tom3games.github.io/quizking/og.png">
+<meta property="og:url" content="https://tom3games.github.io/quizking/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23d6342b'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='900'%3EQ%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+[hidden]{display:none!important}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#101538;--navy2:#1c2463;--board:#1f3fae;--paper:#fbf6ea;--ink:#141626;--red:#d6342b;--gold:#f2c230;--green:#2f9d57;--dim:#8f95c4}
+html,body{min-height:100%;background:var(--navy);color:var(--paper);
+  font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',sans-serif;-webkit-tap-highlight-color:transparent;word-break:auto-phrase;line-break:strict;overflow-wrap:anywhere}
+body{background:
+  radial-gradient(ellipse 60% 45% at 18% -5%,rgba(255,236,170,.22),transparent 70%),
+  radial-gradient(ellipse 60% 45% at 82% -5%,rgba(170,200,255,.2),transparent 70%),
+  radial-gradient(ellipse 120% 60% at 50% 115%,#2a1a5e 0%,transparent 70%),var(--navy);
+  background-attachment:fixed;min-height:100svh;overflow-x:hidden}
+button{font-family:inherit;color:inherit}
+.view{min-height:100svh;display:flex;flex-direction:column;align-items:center;padding:max(64px,calc(env(safe-area-inset-top) + 56px)) 16px max(24px,env(safe-area-inset-bottom));gap:16px}
+.wrap{width:min(560px,100%);display:flex;flex-direction:column;align-items:center;gap:16px}
+
+/* 共通ボタン */
+.btn{font-weight:900;font-size:18px;letter-spacing:.05em;border:0;border-radius:14px;min-height:54px;padding:0 22px;cursor:pointer;width:100%;
+  background:var(--paper);color:var(--ink);box-shadow:0 5px 0 #b8ae96;transition:transform .07s,box-shadow .07s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #b8ae96}
+.btn.red{background:var(--red);color:#fff;box-shadow:0 5px 0 #861d17;font-size:21px;min-height:62px}
+.btn.red:active{box-shadow:0 1px 0 #861d17}
+.btn.gold{background:var(--gold);color:var(--ink);box-shadow:0 5px 0 #a8831a}
+.btn.gold:active{box-shadow:0 1px 0 #a8831a}
+.btn.ghost{background:transparent;color:var(--paper);box-shadow:inset 0 0 0 2px rgba(251,246,234,.4);font-size:16px;min-height:48px}
+.btn:disabled{opacity:.45;pointer-events:none}
+.row{display:flex;gap:10px;width:100%}
+.row>.btn{flex:1}
+
+#corner{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));display:flex;gap:8px;z-index:40}
+.ic{width:44px;height:44px;border-radius:50%;border:0;background:rgba(16,21,56,.7);box-shadow:inset 0 0 0 1.5px rgba(251,246,234,.3);color:var(--paper);display:grid;place-items:center;cursor:pointer;font-weight:900;font-size:13px}
+.ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* タイトル */
+.logo{text-align:center;font-family:'Dela Gothic One',sans-serif;font-weight:400;line-height:1.05;margin-top:2vh}
+.logo .pre{display:block;font-size:clamp(14px,4vw,19px);letter-spacing:.32em;color:var(--gold);margin-bottom:10px;font-family:'Zen Maru Gothic',sans-serif;font-weight:900}
+.logo .main{display:block;font-size:clamp(46px,14vw,96px);color:#fff;text-shadow:0 5px 0 var(--red),0 10px 28px rgba(0,0,0,.5)}
+.logo .sub{display:block;font-size:clamp(15px,4.2vw,20px);margin-top:12px;color:var(--paper);letter-spacing:.2em;font-family:'Zen Maru Gothic',sans-serif;font-weight:900}
+.lead{font-size:16px;line-height:1.75;text-align:center;font-weight:700;text-wrap:pretty;max-width:24em;opacity:.92}
+.stagepic{width:min(360px,90%);height:auto;margin:4px 0}
+.small{font-size:13px;opacity:.7;text-align:center;line-height:1.6}
+
+/* カード（入力・プロフィール） */
+.card{width:100%;background:var(--paper);color:var(--ink);border-radius:20px;padding:22px 18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.card h2{font-family:'Dela Gothic One',sans-serif;font-weight:400;font-size:22px;text-align:center;margin-bottom:6px}
+.card .hint{font-size:14px;text-align:center;opacity:.7;margin-bottom:14px;line-height:1.6}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:13px;font-weight:900;opacity:.75}
+.field input{font-family:inherit;font-weight:900;font-size:20px;padding:12px 14px;border-radius:12px;border:2px solid #cfc6af;background:#fff;color:var(--ink);width:100%;min-height:54px}
+.field input:focus{outline:none;border-color:var(--board)}
+.vs-mark{text-align:center;font-family:'Dela Gothic One',sans-serif;font-size:22px;color:var(--red);margin:-2px 0 8px}
+
+.prof{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center}
+.prof .ava{width:96px;height:106px}
+.prof .nm{font-weight:900;font-size:19px;line-height:1.3;word-break:break-all}
+.prof .dev{display:flex;align-items:baseline;gap:6px;margin-top:4px}
+.prof .dev b{font-family:'Dela Gothic One',sans-serif;font-weight:400;font-size:40px;line-height:1;color:var(--red)}
+.prof .dev span{font-size:13px;font-weight:900;opacity:.7}
+.stats{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+.st{display:grid;grid-template-columns:5.2em 1fr 2.2em;gap:8px;align-items:center;font-size:14px;font-weight:900}
+.st .bar{height:12px;background:#e6dcc5;border-radius:6px;overflow:hidden}
+.st .bar i{display:block;height:100%;background:var(--board);border-radius:6px;width:0;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.st .v{text-align:right;font-variant-numeric:tabular-nums}
+.skill{margin-top:14px;background:#efe6cf;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.55}
+.skill b{display:block;font-size:15px;color:var(--red)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tags span{font-size:12px;font-weight:900;background:var(--ink);color:var(--paper);padding:3px 9px;border-radius:99px}
+
+/* トーナメント表 */
+.bracket{width:100%;display:flex;flex-direction:column;gap:14px}
+.round h3{font-size:14px;letter-spacing:.2em;color:var(--gold);margin-bottom:8px;text-align:center}
+.round .ms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.round.r3 .ms{grid-template-columns:minmax(0,1fr)}
+.mt{min-width:0;background:rgba(255,255,255,.07);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:700}
+.mt div{display:flex;justify-content:space-between;gap:6px;padding:3px 6px;border-radius:6px;min-height:24px;align-items:center}
+.mt div span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt .me{box-shadow:inset 0 0 0 2px var(--gold)}
+.mt .win{background:var(--paper);color:var(--ink)}
+.mt .lose{opacity:.4;text-decoration:line-through}
+.mt .sc{font-variant-numeric:tabular-nums;flex:none}
+.next-card{width:100%;text-align:center;font-weight:900;font-size:17px;line-height:1.6}
+.next-card .vsline{font-family:'Dela Gothic One',sans-serif;font-weight:400;font-size:clamp(20px,6vw,28px);margin-top:4px;word-break:break-all}
+.next-card .vsline em{font-style:normal;color:var(--red);margin:0 .4em}
+
+/* スタジオ */
+#studio{padding-top:max(60px,calc(env(safe-area-inset-top) + 54px));gap:12px}
+#studio .wrap{flex:1;gap:14px}
+#studio .podiums{margin-top:auto;padding-top:56px}
+.mc{width:100%;display:flex;gap:10px;align-items:center;min-height:62px}
+.mc .mcava{width:52px;height:58px;flex:none}
+.mc .line{flex:1;background:rgba(255,255,255,.1);border-radius:14px;padding:9px 13px;font-weight:900;font-size:15px;line-height:1.5;min-height:46px;display:flex;align-items:center}
+.mc .line small{font-size:11px;opacity:.6;display:block;letter-spacing:.1em}
+.qboard{width:100%;background:linear-gradient(180deg,#2c55d6,var(--board) 60%,#1a338c);border:3px solid #9fb6ff;border-radius:16px;padding:12px 16px 14px;
+  box-shadow:0 0 0 4px rgba(16,21,56,.8),0 0 30px rgba(80,120,255,.35);min-height:124px;display:flex;flex-direction:column;gap:6px;position:relative}
+.qboard .qn{font-size:13px;font-weight:900;letter-spacing:.15em;color:#cfe0ff;display:flex;justify-content:space-between}
+.qboard .qt{font-weight:900;font-size:clamp(17px,4.6vw,22px);line-height:1.55;color:#fff;text-wrap:pretty;min-height:3.1em}
+.qboard .qa{font-weight:900;font-size:16px;color:var(--gold);min-height:1.5em}
+.podiums{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.pod{position:relative;display:flex;flex-direction:column;align-items:center}
+.pod .bub{position:absolute;top:-6px;left:50%;transform:translate(-50%,-100%);background:#fff;color:var(--ink);font-weight:900;font-size:15px;line-height:1.4;
+  padding:8px 12px;border-radius:12px;width:max-content;max-width:min(46vw,250px);text-align:center;z-index:5;box-shadow:0 4px 0 rgba(0,0,0,.25);opacity:0;transition:opacity .12s}
+.pod .bub.on{opacity:1}
+.pod .bub::after{content:"";position:absolute;bottom:-9px;left:50%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+.pod .ava{width:min(150px,36vw);height:auto;aspect-ratio:100/110;transition:transform .2s}
+.pod.buzz .ava{transform:translateY(-6px) scale(1.04)}
+.desk{width:100%;background:linear-gradient(180deg,#e7e2d4,#c9c1ab);color:var(--ink);border-radius:10px 10px 4px 4px;padding:8px 8px 10px;margin-top:-8px;position:relative;
+  box-shadow:0 6px 0 #7e7660;display:flex;flex-direction:column;align-items:center;gap:6px}
+.lamp{position:absolute;top:-14px;right:10px;width:26px;height:26px;border-radius:50%;background:#5b1410;border:3px solid #2a2a35;transition:background .1s,box-shadow .1s}
+.pod.buzz .lamp{background:#ff4b3a;box-shadow:0 0 22px 6px rgba(255,90,60,.9)}
+.plate{font-weight:900;line-height:1.25;text-align:center;word-break:break-all;min-height:2.5em;display:flex;align-items:center;font-size:15px}
+.pips{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.pips i{width:14px;height:14px;border-radius:50%;background:#a59d86;box-shadow:inset 0 2px 0 rgba(0,0,0,.2)}
+.pips i.on{background:var(--gold);box-shadow:0 0 8px rgba(242,194,48,.9)}
+.judge{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:30}
+.judge svg{width:min(62vw,300px);height:auto;opacity:0;transform:scale(.6);transition:opacity .12s,transform .2s cubic-bezier(.2,1.6,.4,1)}
+.judge.on svg{opacity:.95;transform:scale(1)}
+.ev{width:100%;text-align:center;font-weight:900;font-size:15px;color:var(--gold);min-height:1.5em;line-height:1.5}
+.ctrl{width:100%;display:flex;gap:10px;margin-top:auto;padding-top:6px}
+.ctrl .btn{font-size:15px;min-height:46px}
+
+/* 結果 */
+.rank{font-family:'Dela Gothic One',sans-serif;font-weight:400;font-size:clamp(46px,14vw,88px);line-height:1.05;text-align:center;color:#fff;text-shadow:0 5px 0 var(--red)}
+.rank.champ{color:var(--gold);text-shadow:0 5px 0 #8a5d00,0 0 40px rgba(242,194,48,.6)}
+.rcomment{font-weight:900;font-size:17px;line-height:1.7;text-align:center;text-wrap:pretty}
+.rname{font-weight:900;font-size:clamp(20px,6vw,30px);text-align:center;line-height:1.3;margin-bottom:-6px}
+.rpre{font-size:14px;letter-spacing:.2em;color:var(--gold);font-weight:900;text-align:center}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:35;width:100%;height:100%}
+
+/* 遊び方 */
+#howto .card ol{padding-left:1.3em;display:flex;flex-direction:column;gap:10px;font-size:16px;line-height:1.65;font-weight:700}
+#howto .card .story{font-size:15px;line-height:1.75;margin-bottom:16px;background:#efe6cf;border-radius:12px;padding:12px 14px}
+
+#boot-err{position:fixed;left:8px;right:8px;bottom:8px;background:#fff;color:#b00;font:12px/1.4 monospace;padding:8px;z-index:99;white-space:pre-wrap;border-radius:6px}
+.fade-in{animation:fin .35s ease-out both}
+@keyframes fin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (min-width:900px){ .wrap{width:640px} .pod .ava{width:150px} }
+@media (orientation:portrait) and (max-height:680px){
+  #studio{padding-top:max(56px,calc(env(safe-area-inset-top) + 50px));padding-bottom:12px} #studio .wrap{gap:8px}
+  .mc{min-height:44px} .mc .mcava{width:38px;height:42px} .mc .line{font-size:14px;padding:6px 10px;min-height:38px}
+  .qboard{min-height:92px;padding:8px 12px 10px} .qboard .qt{font-size:17px;min-height:2.6em}
+  #studio .podiums{padding-top:44px} .pod .ava{width:min(84px,26vw)} .plate{min-height:2.2em;font-size:13px} .ctrl .btn{min-height:44px}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .view{padding-top:56px;gap:10px} #studio{padding-top:52px;gap:8px}
+  .logo .main{font-size:clamp(36px,12vh,64px)} .stagepic{display:none} .lead{display:none}
+  .wrap{width:min(760px,100%)}
+  #studio{padding-top:max(10px,env(safe-area-inset-top));padding-right:64px}
+  #studio .wrap{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto auto;column-gap:16px;row-gap:8px;width:min(900px,100%);align-items:start}
+  #studio .mc{grid-column:1;grid-row:1;min-height:40px} #studio .qboard{grid-column:1;grid-row:2;min-height:0;height:100%;padding:8px 14px}
+  #studio .ev{grid-column:1;grid-row:3} #studio .podiums{grid-column:2;grid-row:1/4;margin-top:0;padding-top:64px;align-self:end}
+  #studio .ctrl{grid-column:1/3;grid-row:4;padding-top:0}
+  .pod .ava{width:min(96px,24vh)} .mc .mcava{width:36px;height:40px} .mc .line{font-size:14px;padding:6px 10px;min-height:36px}
+  .qboard .qt{font-size:17px;min-height:0} .pod .bub{font-size:13px;max-width:22vw}
+}
+</style>
+</head>
+<body>
+<div id="corner">
+  <button class="ic" id="bLang" aria-label="Language">EN</button>
+  <button class="ic" id="bMute" aria-label="Sound">
+    <svg id="icOn" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+    <svg id="icOff" viewBox="0 0 24 24" hidden><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+  </button>
+</div>
+
+<!-- タイトル -->
+<main class="view" id="vTitle">
+  <div class="wrap">
+    <h1 class="logo"><span class="pre" data-t="logoPre"></span><span class="main" data-t="logoMain"></span><span class="sub" data-t="logoSub"></span></h1>
+    <svg class="stagepic" id="titlePic" viewBox="0 0 360 150" aria-hidden="true"></svg>
+    <p class="lead" data-t="lead"></p>
+    <button class="btn red" id="bCup" data-t="modeCup"></button>
+    <button class="btn gold" id="bVs" data-t="modeVs"></button>
+    <button class="btn ghost" id="bHow" data-t="how"></button>
+    <p class="small" id="tRecord"></p>
+  </div>
+</main>
+
+<!-- 入力 -->
+<main class="view" id="vEntry" hidden>
+  <div class="wrap">
+    <div class="card">
+      <h2 id="eTitle"></h2>
+      <p class="hint" id="eHint"></p>
+      <form id="eForm" autocomplete="off">
+        <div class="field"><label for="in1" id="lab1"></label><input id="in1" maxlength="24" enterkeyhint="go"></div>
+        <p class="vs-mark" id="vsMark" hidden>VS</p>
+        <div class="field" id="f2" hidden><label for="in2" id="lab2"></label><input id="in2" maxlength="24" enterkeyhint="go"></div>
+        <div id="ePrev"></div>
+        <button class="btn red" type="submit" id="bEntry" data-t="entry"></button>
+      </form>
+    </div>
+    <button class="btn ghost" id="bBack1" data-t="back"></button>
+  </div>
+</main>
+
+<!-- プロフィール発表 -->
+<main class="view" id="vProfile" hidden>
+  <div class="wrap">
+    <p class="rpre" data-t="profPre"></p>
+    <div class="card" id="pCard"></div>
+    <div class="card" id="pCard2" hidden></div>
+    <button class="btn red" id="bGo"></button>
+    <button class="btn ghost" id="bBack2" data-t="back"></button>
+  </div>
+</main>
+
+<!-- トーナメント表 -->
+<main class="view" id="vBracket" hidden>
+  <div class="wrap">
+    <p class="rpre" data-t="bracketPre"></p>
+    <div class="bracket" id="brk"></div>
+    <div class="next-card" id="nextCard"></div>
+    <button class="btn red" id="bFight" data-t="fight"></button>
+  </div>
+</main>
+
+<!-- スタジオ -->
+<main class="view" id="studio" hidden>
+  <div class="wrap">
+    <div class="mc"><svg class="mcava" id="mcAva" viewBox="0 0 100 110"></svg><div class="line" id="mcLine"></div></div>
+    <div class="qboard"><div class="qn"><span id="qNum"></span><span id="qRound"></span></div><div class="qt" id="qText"></div><div class="qa" id="qAns"></div></div>
+    <div class="ev" id="evLine"></div>
+    <div class="podiums" id="pods"></div>
+    <div class="ctrl"><button class="btn ghost" id="bFast"></button><button class="btn ghost" id="bSkip" data-t="skip"></button></div>
+  </div>
+</main>
+<div class="judge" id="judge"><svg viewBox="0 0 200 200" id="judgeSvg"></svg></div>
+
+<!-- 結果 -->
+<main class="view" id="vResult" hidden>
+  <div class="wrap">
+    <p class="rpre" id="rPre"></p>
+    <p class="rname" id="rName"></p>
+    <p class="rank" id="rRank"></p>
+    <p class="rcomment" id="rComment"></p>
+    <div class="card" id="rCard"></div>
+    <div class="row"><button class="btn gold" id="bPost" data-t="post"></button><button class="btn" id="bImg" data-t="img"></button></div>
+    <button class="btn red" id="bAgain" data-t="again"></button>
+    <button class="btn ghost" id="bTop" data-t="top"></button>
+  </div>
+</main>
+
+<!-- 遊び方 -->
+<main class="view" id="howto" hidden>
+  <div class="wrap">
+    <div class="card">
+      <h2 data-t="howTitle"></h2>
+      <p class="story" data-t="story"></p>
+      <ol><li data-t="how1"></li><li data-t="how2"></li><li data-t="how3"></li><li data-t="how4"></li></ol>
+      <button class="btn red" id="bHowClose" data-t="ok" style="margin-top:18px"></button>
+    </div>
+  </div>
+</main>
+<canvas id="confetti" hidden></canvas>
+
+<script>
+// 起動失敗の保険。本体より先に動く素のscript。5秒たって起動フラグが無ければ原因を画面に出す
+(function(){
+  var errs=[];
+  window.addEventListener('error',function(e){errs.push((e.message||'error')+' @'+(e.filename||'')+':'+(e.lineno||''))});
+  window.addEventListener('unhandledrejection',function(e){errs.push('reject: '+(e.reason&&e.reason.message||e.reason))});
+  setTimeout(function(){
+    if(window.__qkReady) return;
+    var d=document.createElement('div');d.id='boot-err';
+    d.textContent='起動できませんでした / failed to start\n'+(errs.join('\n')||'(no error captured)')+'\n'+navigator.userAgent;
+    document.body.appendChild(d);
+  },5000);
+})();
+</script>
+<script src="data.js?v=1"></script>
+<script src="game.js?v=1"></script>
+</body>
+</html>
