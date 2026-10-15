@@ -145,12 +145,23 @@ await t('大会: 名前を入れるまでエントリーボタンは押せない
   expect(await p.isDisabled('#bEntry'), 'enabled while empty')
   await p.fill('#in1', '   '); expect(await p.isDisabled('#bEntry'), 'enabled with spaces')
 })
-await t('入力中に偏差値の予告が出る', async () => {
-  await p.fill('#in1', 'ともき工科大学'); const s = await p.textContent('#ePrev'); expect(/偏差値 \d+/.test(s), s); return s
+await t('「大学」は固定で付き、打っても二重にならない', async () => {
+  const r = await p.evaluate(() => [qk.fullName('ねこ'), qk.fullName('ねこ大学'), qk.fullName(' ねこ 大学 '), qk.fullName('大学'), qk.fullName('')])
+  expect(r[0] === 'ねこ大学' && r[1] === 'ねこ大学' && r[2] === 'ねこ大学' && r[3] === '' && r[4] === '', JSON.stringify(r))
+  expect(await p.textContent('#vEntry .suf') === '大学', 'suffix label')
+  return r
+})
+await t('入力中には偏差値を出さない', async () => {
+  await p.fill('#in1', 'ともき工科大学'); const s = await p.textContent('#vEntry'); expect(!/偏差値/.test(s), s)
 })
 await p.screenshot({ path: ROOT + '/shots/02-entry.png' })
 await t('Enterで名鑑が出る。能力バーが伸びる', async () => {
-  await p.press('#in1', 'Enter'); await p.waitForSelector('#vProfile:not([hidden])'); await p.waitForTimeout(900)
+  await p.press('#in1', 'Enter'); await p.waitForSelector('#vProfile:not([hidden])')
+  // 偏差値は回っている間は確定値と違い、止まると確定値になる。回っている間は先へ進めない
+  const spin = await p.evaluate(() => document.querySelector('#bGo').disabled)
+  await p.waitForTimeout(1400)
+  const dev = await p.evaluate(() => [document.querySelector('#vProfile .dev b').textContent, String(qk.S.me.dev), document.querySelector('#bGo').disabled])
+  expect(spin && dev[0] === dev[1] && !dev[2], JSON.stringify([spin, dev]))
   const w = await p.evaluate(() => [...document.querySelectorAll('#pCard .bar i')].map(i => i.getBoundingClientRect().width))
   expect(w.length === 5 && w.every(x => x > 0), JSON.stringify(w)); return w.map(Math.round)
 })
@@ -177,8 +188,14 @@ await t('対戦: 問題が1文字ずつ出て、早押しで止まり、正誤�
   }
   expect(Object.values(seen).every(Boolean), JSON.stringify(seen)); return seen
 })
-await t('結果まで飛ばすと試合が終わり、表か結果に進む', async () => {
+await t('試合の終わりに勝ち負けの帯とハンコが出る', async () => {
   await p.click('#bSkip')
+  await p.waitForSelector('#endBan.on', { timeout: 15000 })
+  const r = await p.evaluate(() => ({ main: document.querySelector('#ebMain').textContent, sub: document.querySelector('#ebSub').textContent, win: document.querySelectorAll('.pod.win').length, lose: document.querySelectorAll('.pod.lose').length, st: [...document.querySelectorAll('.stamp')].map(x => x.textContent) }))
+  await p.screenshot({ path: ROOT + '/shots/05b-end.png' })
+  expect(['勝ち抜け！', '敗退…', '優勝！'].includes(r.main) && r.win === 1 && r.lose === 1 && r.st.includes('勝ち') && r.st.includes('負け'), JSON.stringify(r)); return r
+})
+await t('結果まで飛ばすと試合が終わり、表か結果に進む', async () => {
   await p.waitForFunction(() => !document.querySelector('#vBracket').hidden || !document.querySelector('#vResult').hidden, null, { timeout: 15000 })
   return await p.evaluate(() => qk.S.view)
 })
@@ -194,7 +211,13 @@ await t('大会を最後まで進めると順位が出て、最高成績が保�
   const r = await p.evaluate(() => ({ rank: document.querySelector('#rRank').textContent, cm: document.querySelector('#rComment').textContent, best: localStorage.getItem('qk.best') }))
   expect(['優勝', '準優勝', 'ベスト4', '1回戦敗退'].includes(r.rank) && r.best, JSON.stringify(r)); return r
 })
-await p.waitForTimeout(900); await p.screenshot({ path: ROOT + '/shots/06-result.png', fullPage: true })
+await p.screenshot({ path: ROOT + '/shots/06a-reveal.png' }); await p.waitForTimeout(4500); await p.screenshot({ path: ROOT + '/shots/06-result.png', fullPage: true })
+await t('結果画面で、どこで誰に負けたか（または全勝）と試合ごとの勝ち負けが出る', async () => {
+  const r = await p.evaluate(() => ({ lost: document.querySelector('#rLost').textContent, rows: [...document.querySelectorAll('#rRec .rr')].map(x => x.textContent), out: qk.S.cup.out }))
+  const ok = r.out >= 0 ? /で負けました/.test(r.lost) && r.rows.length === r.out + 1 && r.rows[r.rows.length - 1].startsWith('負け') : r.lost === '全試合に勝ちました' && r.rows.length === 3
+  expect(ok, JSON.stringify(r)); return r
+})
+
 await t('負けた大会のトーナメント表は最後まで埋まる', async () => {
   const r = await p.evaluate(() => { const c = qk.S.cup; return { out: c.out, champ: !!c.champ, done: c.rounds.every(ms => ms.every(m => m.done)), rounds: c.rounds.length } })
   expect(r.rounds === 3 && r.done, JSON.stringify(r)); return r
@@ -213,13 +236,17 @@ await t('Xの投稿文に大学名・順位・ハッシュタグが入る', asyn
   const r = await p.evaluate(() => { let u; const o = window.open; window.open = x => { u = x }; document.querySelector('#bPost').click(); window.open = o; return decodeURIComponent(u) })
   expect(r.includes('ともき工科大学') && r.includes('#大学生クイズ王') && r.includes('x.com/intent'), r); return r.slice(0, 120)
 })
+await t('結果発表: 幕が開いたあと全部の要素が表示され、幕は消える', async () => {
+  const r = await p.evaluate(() => ({ rv: document.querySelector('#reveal').hidden, hiddenSeq: [...document.querySelectorAll('#vResult .seq')].filter(e => getComputedStyle(e).opacity < 0.99).map(e => e.id || e.className) }))
+  expect(r.rv && r.hiddenSeq.length === 0, JSON.stringify(r))
+})
 await t('ここまでエラーが出ていない', async () => { expect(p.errs.length === 0, p.errs.join('|')) })
 
 await t('画面上でも近畿大学で大会に出ると優勝する', async () => {
   await p.click('#bTop'); await p.click('#bCup'); await p.fill('#in1', '近畿大学'); await p.click('#bEntry'); await p.click('#bGo')
   for (let i = 0; i < 6 && !(await p.isVisible('#vResult')); i++) { await p.click('#bFight'); if (await p.isVisible('#studio')) { await p.click('#bSkip'); await p.waitForFunction(() => document.querySelector('#studio').hidden, null, { timeout: 15000 }) } }
   const r = await p.textContent('#rRank'); expect(r === '優勝', r)
-  await p.screenshot({ path: ROOT + '/shots/06b-kindai.png', fullPage: true }); return r
+  await p.waitForTimeout(2600); await p.screenshot({ path: ROOT + '/shots/06c-kindai-mid.png' }); await p.waitForTimeout(2000); await p.screenshot({ path: ROOT + '/shots/06b-kindai.png', fullPage: true }); return r
 })
 // ---------- 対決モード
 await t('2校対決: 2つ入れないと押せず、試合を経て勝者が出る', async () => {
@@ -252,7 +279,7 @@ await t('共有URLに2校の名前が入り、開くと入力済みで始まる'
   expect(u.includes('?a=') && u.includes('東の大学') && u.includes('西の大学'), u)
   const q = await p.context().newPage(); await q.goto(URL0 + '?a=' + encodeURIComponent('東の大学') + '&b=' + encodeURIComponent('西の大学')); await q.waitForFunction(() => window.__qkReady)
   const r = await q.evaluate(() => ({ v: qk.S.view, a: document.querySelector('#in1').value, b: document.querySelector('#in2').value, en: document.querySelector('#bEntry').disabled }))
-  await q.close(); expect(r.v === 'vEntry' && r.a === '東の大学' && r.b === '西の大学' && !r.en, JSON.stringify(r)); return u
+  await q.close(); expect(r.v === 'vEntry' && r.a === '東の' && r.b === '西の' && !r.en, JSON.stringify(r)); return u
 })
 await t('イベント文は次の問題で消える', async () => {
   const r = await p.evaluate(() => { for (let i = 0; i < 400; i++) { const m = qk.simMatch(qk.makeUni('e' + i), qk.makeUni('f' + i), i); const k = m.log.findIndex(e => e.k === 'event'); if (k >= 0 && m.log.slice(k + 1).some(e => e.k === 'q')) return i } return -1 })
@@ -321,7 +348,7 @@ for (const [w, h, nm] of sizes) {
     if (bub.l < 0 || bub.r > bub.W || bub.t < 0) bad.push('bubble ' + JSON.stringify(bub))
     await q.click('#bSkip'); await q.waitForFunction(() => document.querySelector('#studio').hidden, null, { timeout: 15000 })
     for (let i = 0; i < 4 && !(await q.isVisible('#vResult')); i++) { await q.click('#bFight'); if (await q.isVisible('#studio')) { await q.click('#bSkip'); await q.waitForFunction(() => document.querySelector('#studio').hidden, null, { timeout: 15000 }) } }
-    await q.waitForTimeout(900); await chk('result')
+    await q.waitForTimeout(4500); await chk('result')
     expect(q.errs.length === 0, q.errs.join('|'))
     expect(bad.length === 0, bad.join(' '))
     await q.context().close()

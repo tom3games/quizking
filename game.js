@@ -13,15 +13,16 @@ const L = {
     lead: '大学名を入れるだけで出場。偏差値も能力も名前で決まる。あとは早押しクイズが勝手に進む。',
     modeCup: '大会に出る', modeVs: '2校で対決', how: '遊び方', back: 'もどる', ok: 'わかった',
     record: '最高成績 {r}（{n}）',
-    eTitleCup: 'エントリー', eHintCup: 'あなたの大学名を入れてください。実在しなくてもいい。',
-    eTitleVs: '2校で対決', eHintVs: '同じ組み合わせなら、何度やっても同じ結果になります。',
-    lab1: '大学名', lab1vs: '1校目', lab2: '2校目', ph1: '例: 〇〇大学', ph2: '例: △△大学', entry: 'エントリーする',
+    eTitleCup: 'エントリー', eHintCup: '「大学」の前の部分を入れてください。実在しなくていい。',
+    eTitleVs: '2校で対決', eHintVs: '2校の名前を入れてください。同じ組み合わせなら、何度やっても同じ結果です。',
+    lab1: '大学名', lab1vs: '1校目', lab2: '2校目', ph1: '例: ねこ', ph2: '例: いぬ', suffix: '大学', entry: 'エントリーする',
     profPre: '選 手 名 鑑', goCup: '大会へ', goVs: '対決スタート', dev: '偏差値', good: '得意',
     stat: { kn: '知識', sp: '早押し', gu: '度胸', ya: 'ヤマ勘', st: '体力' },
     genre: { ri: '理系', bun: '文系', zatsu: '雑学', sp: 'スポーツ' },
     bracketPre: 'ト ー ナ メ ン ト 表', rounds: ['1回戦', '準決勝', '決勝'], fight: '対戦へ', toResult: '結果を見る',
     nextVs: '{r} の相手', eliminated: '{r}で敗退。残りの試合はこうなった。',
-    fast: '早送り', normal: '等速', skip: '結果まで飛ばす', qn: '第{n}問', firstTo: '{n}問先取', mc: '司会',
+    fast: '早送り', normal: '等速', skip: 'スキップ', qn: '第{n}問', firstTo: '{n}問先取', mc: '司会・早押太郎',
+    rvTitle: '結果発表ー！', stR2: '惜しい！', stR4: 'よく頑張った', stR8: 'ドンマイ', stVs: '勝者', entryNo: 'エントリー No.{n}',
     mcIntro: '{a} 対 {b}！ 先に{n}問正解した方が勝ち抜けです。', mcRead: '問題。', mcBuzz: '{a}、早かった！',
     mcOk: '正解！', mcNg: '残念！', mcChance: '{a}にチャンス！', mcNone: '誰も押さない……。', mcReveal: '正解は「{x}」でした。',
     mcWin: '{a}、勝ち抜け！', mcChamp: '優勝は{a}！ 今年のクイズ王が決まりました！', mcTie: '決着つかず。じゃんけんで決めます。', mcTieWin: '{a}がグーで勝ちました。',
@@ -41,13 +42,15 @@ const L = {
     shareCup: '「{n}」で全日本大学生クイズ王決定戦に出たら{r}でした。偏差値{d}、特技は「{k}」。',
     shareVs: '「{w}」と「{l}」を戦わせたら、{w}が{s}で勝ちました。勝因は特技「{k}」。',
     winner: '勝者', skillLabel: '特技',
+    banAdv: '勝ち抜け！', banChamp: '優勝！', banLose: '敗退…', banVs: '勝負あり！', banVsSub: '{w}の勝ち（{s}）',
+    stampWin: '勝ち', stampLose: '負け', lostTo: '{r}で「{o}」に {s} で負けました', allWin: '全試合に勝ちました', recW: '勝ち', recL: '負け', vsOpp: '対 {o}',
     tag: '#大学生クイズ王',
     post: 'Xでポスト', img: '画像を保存', again: 'もう一回', top: 'タイトルへ', saved: '保存しました',
     howTitle: '遊び方',
     story: '年に一度、全国の大学がプライドを賭けて集まる早押しクイズ大会がある。出場条件は大学名だけ。偏差値も、能力も、名前を書いた瞬間に決まる。',
     how1: '大学名を入れる。実在しなくてもいい。',
     how2: '名前から偏差値・能力・特技が決まる。同じ名前なら誰がやっても同じ。',
-    how3: '試合は自動で進む。見守るだけ。早送りと「結果まで飛ばす」もある。',
+    how3: '試合は自動で進む。見守るだけ。早送りとスキップもある。',
     how4: '結果をXに貼って、友達の大学と比べる。',
     kw: { kindai: '近大マグロ', elite: '名門オーラ', med: '医学部っぽい', sport: '体育会', art: '芸術肌', tech: '理系の香り', potty: '下品', quiz: 'クイズ研', grad: '院生', online: '在宅', short: '名前が短い', long: '名前が長い' },
   },
@@ -56,15 +59,16 @@ const L = {
     lead: 'Type a college name and you are in. Its IQ, stats and skills all come from the name. The buzzer quiz plays itself.',
     modeCup: 'Enter the Tournament', modeVs: 'College vs College', how: 'How to Play', back: 'Back', ok: 'Got it',
     record: 'Best: {r} ({n})',
-    eTitleCup: 'Entry', eHintCup: 'Type your college name. It does not have to exist.',
+    eTitleCup: 'Entry', eHintCup: 'Type the name before "University". It does not have to exist.',
     eTitleVs: 'College vs College', eHintVs: 'The same pair always gives the same result.',
-    lab1: 'College name', lab1vs: 'College 1', lab2: 'College 2', ph1: 'e.g. Example University', ph2: 'e.g. Sample College', entry: 'Enter',
+    lab1: 'College name', lab1vs: 'College 1', lab2: 'College 2', ph1: 'e.g. Pizza', ph2: 'e.g. Taco', suffix: 'University', entry: 'Enter',
     profPre: 'P L A Y E R   C A R D', goCup: 'To the Tournament', goVs: 'Start the Match', dev: 'Score', good: 'Best at',
     stat: { kn: 'Brains', sp: 'Buzzer', gu: 'Nerve', ya: 'Luck', st: 'Stamina' },
     genre: { ri: 'Science', bun: 'Humanities', zatsu: 'Trivia', sp: 'Sports' },
     bracketPre: 'B R A C K E T', rounds: ['Round 1', 'Semifinal', 'Final'], fight: 'Fight', toResult: 'See Result',
     nextVs: '{r} opponent', eliminated: 'Out in the {r}. Here is how the rest went.',
-    fast: 'Fast', normal: 'Normal', skip: 'Skip to Result', qn: 'Q{n}', firstTo: 'First to {n}', mc: 'HOST',
+    fast: 'Fast', normal: 'Normal', skip: 'Skip', qn: 'Q{n}', firstTo: 'First to {n}', mc: 'HOST Buzz Taro',
+    rvTitle: 'RESULTS!', stR2: 'So close!', stR4: 'Nice try', stR8: 'Oh well', stVs: 'WINNER', entryNo: 'ENTRY No.{n}',
     mcIntro: '{a} vs {b}! First to {n} correct answers advances.', mcRead: 'Question.', mcBuzz: '{a} buzzes in!',
     mcOk: 'Correct!', mcNg: 'Wrong!', mcChance: '{a}, your chance!', mcNone: 'Nobody buzzes...', mcReveal: 'The answer was "{x}".',
     mcWin: '{a} advances!', mcChamp: '{a} wins it all! We have our Quiz King!', mcTie: 'Still tied. Rock paper scissors decides.', mcTieWin: '{a} wins with rock.',
@@ -84,6 +88,8 @@ const L = {
     shareCup: 'I entered "{n}" in the College Quiz King Championship: {r}. Score {d}, skill: "{k}".',
     shareVs: 'I made "{w}" fight "{l}". {w} won {s} thanks to "{k}".',
     winner: 'WINNER', skillLabel: 'Skill',
+    banAdv: 'ADVANCE!', banChamp: 'CHAMPION!', banLose: 'ELIMINATED', banVs: 'GAME!', banVsSub: '{w} wins ({s})',
+    stampWin: 'WIN', stampLose: 'LOSE', lostTo: 'Lost to "{o}" {s} in the {r}', allWin: 'Won every match', recW: 'WIN', recL: 'LOSE', vsOpp: 'vs {o}',
     tag: '#CollegeQuizKing',
     post: 'Post on X', img: 'Save Image', again: 'Play Again', top: 'Title', saved: 'Saved',
     howTitle: 'How to Play',
@@ -128,6 +134,9 @@ const t = (k, v) => {
 function hash(str) { let h = 2166136261 >>> 0; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0 } return h }
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ x >>> 15, x | 1); x ^= x + Math.imul(x ^ x >>> 7, x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296 } }
 const normName = s => String(s || '').normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 24);
+// 入力欄は「〇〇」の部分だけ。末尾の「大学」は固定で付ける（打ってしまっても二重にしない）
+const stripSuffix = s => normName(s).replace(/\s*(大学|university)$/i, '').trim();
+const fullName = s => { const b = stripSuffix(s); return b ? normName(lang === 'ja' ? b + '大学' : b + ' University') : '' };
 
 // 名前に含まれる言葉で能力が少し動く。試したくなる仕掛け
 const KEYWORDS = [
@@ -378,6 +387,10 @@ const Snd = {
   laugh() { const t0 = this.now(); for (let i = 0; i < 6; i++) this.noise(t0 + i * 0.11, 0.09, 0.12, 900 + Math.random() * 500, 'bandpass') },
   fanfare() { const t0 = this.now(); [[523, 0], [659, .14], [784, .28], [1046, .42], [784, .7], [1046, .84]].forEach(([f, d]) => { this.tone(f, t0 + d, d > .8 ? .9 : .2, 'sawtooth', 0.12); this.tone(f / 2, t0 + d, d > .8 ? .9 : .2, 'square', 0.08) }); this.noise(t0 + 0.8, 1.6, 0.25, 800, 'bandpass') },
   sad() { const t0 = this.now(); [523, 494, 466, 440].forEach((f, i) => this.tone(f, t0 + i * 0.28, 0.4, 'triangle', 0.22)) },
+  curtain() { const t0 = this.now(); this.noise(t0, 1.0, 0.18, 600, 'lowpass') },
+  slide() { this.tone(1500, this.now(), 0.7, 'sine', 0.3, null, 180) },
+  bonk() { const t0 = this.now(); this.tone(170, t0, 0.25, 'triangle', 0.6, null, 55); this.noise(t0, 0.12, 0.3, 500, 'lowpass') },
+  stamp() { const t0 = this.now(); this.tone(110, t0, 0.15, 'sine', 0.6, null, 50); this.noise(t0, 0.06, 0.25, 2500, 'bandpass') },
   drum(sec) { const t0 = this.now(); for (let x = 0; x < sec; x += 0.045) this.noise(t0 + x, 0.04, 0.05 + x / sec * 0.12, 300, 'lowpass') },
 };
 
@@ -392,7 +405,7 @@ function applyTexts() {
   for (const el of document.querySelectorAll('[data-t]')) el.innerHTML = t(el.dataset.t);
   $('#bLang').textContent = lang === 'ja' ? 'EN' : 'JA';
   $('#bLang').setAttribute('aria-label', lang === 'ja' ? 'English' : '日本語');
-  $('#bFast').textContent = S.speed > 1 ? t('normal') : t('fast');
+  $('#bFastT').textContent = S.speed > 1 ? t('normal') : t('fast');
   renderRecord(); renderTitlePic();
   if (S.view === 'vEntry') setupEntry(S.mode, true);
   if (S.view === 'vProfile') renderProfile();
@@ -403,13 +416,19 @@ function renderRecord() {
 }
 function renderTitlePic() {
   const a = makeUni(lang === 'ja' ? 'タイトル大学' : 'Title U'), b = makeUni(lang === 'ja' ? 'となり大学' : 'Neighbor U');
+  // 回答席と同じ作り（大学の色の台・早押しランプ・得点表示）を小さく描く
+  const desk = (x, u, on, sc) => `<g transform="translate(${x},0)">
+      <g transform="translate(12,18) scale(.86)">${avatar(u.look, on ? 'shock' : 'think')}</g>
+      <path d="M33 104a22 13 0 0 1 44 0z" fill="${on ? '#ff4b3a' : '#5b1410'}" stroke="#1a1a28" stroke-width="3"/>
+      ${on ? '<circle cx="55" cy="100" r="22" fill="#ff5a40" opacity=".35"/>' : ''}
+      <rect x="0" y="104" width="110" height="46" rx="8" fill="hsl(${u.look.hue} 62% 42%)"/>
+      <rect x="8" y="110" width="94" height="16" rx="4" fill="#fbf6ea"/>
+      <rect x="40" y="130" width="30" height="16" rx="3" fill="#07070f"/>
+      <text x="55" y="143" text-anchor="middle" font-size="14" fill="#ffcf4a" font-family="DotGothic16,monospace">${sc}</text></g>`;
   $('#titlePic').innerHTML = `
-    <rect x="70" y="0" width="220" height="56" rx="10" fill="#1f3fae" stroke="#9fb6ff" stroke-width="3"/>
-    <text x="180" y="35" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" font-family="Dela Gothic One,sans-serif">Q.</text>
-    <g transform="translate(40,58) scale(.72)">${avatar(a.look, 'think')}</g>
-    <g transform="translate(248,58) scale(.72)">${avatar(b.look, 'shock')}</g>
-    <rect x="22" y="128" width="110" height="22" rx="4" fill="#e7e2d4"/><rect x="228" y="128" width="110" height="22" rx="4" fill="#e7e2d4"/>
-    <circle cx="120" cy="124" r="9" fill="#ff4b3a"/><circle cx="326" cy="124" r="9" fill="#5b1410"/>`;
+    <rect x="96" y="2" width="168" height="40" rx="9" fill="#1f3fae" stroke="#a9bfff" stroke-width="3"/>
+    <text x="180" y="30" text-anchor="middle" font-size="20" fill="#fff" font-family="DotGothic16,monospace">Q.？？？</text>
+    ${desk(18, a, true, 4)}${desk(232, b, false, 3)}`;
 }
 
 // ---------- 入力
@@ -421,26 +440,32 @@ function setupEntry(mode, keep) {
   $('#lab1').textContent = t(vs ? 'lab1vs' : 'lab1');
   $('#lab2').textContent = t('lab2');
   $('#in1').placeholder = t('ph1'); $('#in2').placeholder = t('ph2');
+  for (const el of document.querySelectorAll('.suf')) el.textContent = t('suffix');
   $('#f2').hidden = !vs; $('#vsMark').hidden = !vs;
   if (!keep) { $('#in1').value = ''; $('#in2').value = '' }
   updatePreview();
 }
 function updatePreview() {
-  const n1 = normName($('#in1').value), n2 = normName($('#in2').value);
+  const n1 = fullName($('#in1').value), n2 = fullName($('#in2').value);
   const ok = n1 && (S.mode !== 'vs' || n2);
   $('#bEntry').disabled = !ok;
-  const line = n => { const u = makeUni(n); return `<p class="small" style="opacity:.8;color:var(--ink);margin:-4px 0 10px">${esc(u.name)} ── ${t('dev')} ${u.dev}</p>` };
-  $('#ePrev').innerHTML = (n1 ? line(n1) : '') + (S.mode === 'vs' && n2 ? line(n2) : '');
+  // 偏差値は名鑑で初めて見せる。入力中には出さない
 }
 
 // ---------- 名鑑
 function profCard(u) {
-  const st = ['kn', 'sp', 'gu', 'ya', 'st'].map(k => `<div class="st"><span>${t('stat.' + k)}</span><span class="bar"><i data-w="${u.s[k]}"></i></span><span class="v">${u.s[k]}</span></div>`).join('');
-  const tags = [`${t('good')}: ${t('genre.' + u.best)}`, ...u.tags.map(x => t('kw.' + x))].map(x => `<span>${esc(x)}</span>`).join('');
+  const st = ['kn', 'sp', 'gu', 'ya', 'st'].map(k => `<div class="st"><span>${t('stat.' + k)}</span><span class="bar"><i class="${u.s[k] >= 80 ? 'top' : ''}" data-w="${u.s[k]}"></i></span><span class="v">${u.s[k]}</span></div>`).join('');
+  const tags = [`<span>${esc(t('good') + ': ' + t('genre.' + u.best))}</span>`, ...u.tags.map(x => `<span class="hot">${esc(t('kw.' + x))}</span>`)].join('');
   const sk = SKILLS[lang][u.skill];
-  return `<div class="prof"><svg class="ava" viewBox="0 0 100 110">${avatar(u.look, 'happy')}</svg>
-    <div><div class="nm">${esc(u.name)}</div><div class="dev"><span>${t('dev')}</span><b>${u.dev}</b></div><div class="tags">${tags}</div></div></div>
-    <div class="stats">${st}</div><div class="skill"><b>${esc(sk[0])}</b>${esc(sk[1])}</div>`;
+  // エントリー番号は名前から決まる（同じ名前なら同じ番号）
+  const no = String(hash('no:' + u.name) % 10000).padStart(4, '0');
+  return `<div class="pc" style="--hue:${u.look.hue}">
+    <div class="pc-head"><div class="pc-no">${esc(t('entryNo', { n: no }))}</div><div class="nm">${esc(u.name)}</div></div>
+    <div class="pc-mid"><div class="pc-ava"><svg viewBox="0 0 100 110">${avatar(u.look, 'happy')}</svg></div><div class="dev"><span>${t('dev')}</span><b>${u.dev}</b></div></div>
+    <div class="tags">${tags}</div>
+    <div class="stats">${st}</div>
+    <div class="skill"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><div><b>${esc(sk[0])}</b>${esc(sk[1])}</div></div>
+  </div>`;
 }
 function renderProfile() {
   $('#pCard').innerHTML = profCard(S.me);
@@ -448,6 +473,24 @@ function renderProfile() {
   if (S.mode === 'vs') $('#pCard2').innerHTML = profCard(S.uniB);
   $('#bGo').textContent = t(S.mode === 'vs' ? 'goVs' : 'goCup');
   requestAnimationFrame(() => requestAnimationFrame(() => { for (const i of document.querySelectorAll('.bar i')) i.style.width = i.dataset.w + '%' }));
+  spinDev();
+}
+// 偏差値をルーレットのように回してから止める
+let spinId = 0;
+function spinDev() {
+  const els = [...document.querySelectorAll('#vProfile .dev b')], id = ++spinId;
+  const finals = els.map(b => b.textContent);
+  $('#bGo').disabled = true;
+  Snd.drum(1.1);
+  const t0 = performance.now();
+  const step = () => {
+    if (id !== spinId) return;
+    const done = performance.now() - t0 > 1100;
+    els.forEach((b, i) => { b.textContent = done ? finals[i] : String(25 + Math.floor(Math.random() * 75)) });
+    if (done) { $('#bGo').disabled = false; Snd.ok(); return }
+    setTimeout(step, 55);
+  };
+  step();
 }
 
 // ---------- 大会
@@ -481,17 +524,18 @@ function renderBracket() {
   let html = '';
   for (let R = 0; R < 3; R++) {
     const ms = cup.rounds[R];
-    html += `<div class="round r${R + 1}"><h3>${t('rounds')[R]}</h3><div class="ms">`;
+    html += `<div class="round r${R + 1}"><h3 class="eyebrow">${t('rounds')[R]}</h3><div class="ms">`;
     const n = 4 >> R;
     for (let i = 0; i < n; i++) {
       const m = ms && ms[i];
       const show = m && (m.done && (!m.mine || m.shown || cup.out >= 0));
       const row = (u, idx) => {
-        if (!u) return `<div><span>?</span></div>`;
+        if (!u) return `<div class="unk"><i></i><span>？</span><span></span></div>`;
         const cls = [u === S.me ? 'me' : '', show ? (m.w === u ? 'win' : 'lose') : ''].join(' ');
-        return `<div class="${cls}"><span>${esc(u.name)}</span><span class="sc">${show ? m.score[idx] : ''}</span></div>`;
+        return `<div class="${cls}"><i style="--c:hsl(${u.look.hue} 62% 52%)"></i><span>${esc(u.name)}</span><span class="sc">${show ? m.score[idx] : ''}</span></div>`;
       };
-      html += `<div class="mt">${row(m && m.a, 0)}${row(m && m.b, 1)}</div>`;
+      const now = m && m.mine && !m.shown && cup.out < 0 && R === cup.round;
+      html += `<div class="mt${m && m.mine ? ' mine' : ''}${now ? ' now' : ''}">${row(m && m.a, 0)}${row(m && m.b, 1)}</div>`;
     }
     html += `</div></div>`;
   }
@@ -502,7 +546,7 @@ function renderBracket() {
     $('#bFight').textContent = t('toResult');
   } else {
     const opp = mine.a === S.me ? mine.b : mine.a;
-    $('#nextCard').innerHTML = `${esc(t('nextVs', { r: t('rounds')[cup.round] }))}<div class="vsline">${esc(S.me.name)}<em>VS</em>${esc(opp.name)}</div><div class="small" style="margin-top:6px">${t('dev')} ${S.me.dev} / ${opp.dev}</div>`;
+    $('#nextCard').innerHTML = `${esc(t('nextVs', { r: t('rounds')[cup.round] }))}<div class="vsline">${esc(S.me.name)}<em>VS</em>${esc(opp.name)}</div><div class="devs">${t('dev')} ${S.me.dev} : ${opp.dev}</div>`;
     $('#bFight').textContent = t('fight');
   }
 }
@@ -531,14 +575,15 @@ async function onFight() {
 const wait = ms => S.skip ? Promise.resolve() : new Promise(res => setTimeout(res, ms / S.speed));
 let mcAvaDone = false;
 function setPods(A, B, round) {
-  const pod = (u, i) => `<div class="pod" id="pod${i}"><div class="bub" id="bub${i}"></div><svg class="ava" id="ava${i}" viewBox="0 0 100 110">${avatar(u.look)}</svg>
-    <div class="desk"><span class="lamp"></span><div class="plate" style="font-size:${[...u.name].length > 10 ? 13 : 15}px">${esc(u.name)}</div><div class="pips" id="pips${i}"></div></div></div>`;
+  const pod = (u, i) => `<div class="pod" id="pod${i}" style="--hue:${u.look.hue}"><div class="bub" id="bub${i}"></div><svg class="ava" id="ava${i}" viewBox="0 0 100 110">${avatar(u.look)}</svg>
+    <span class="stamp" id="stamp${i}"></span>
+    <div class="desk"><span class="lamp"></span><div class="plate" style="font-size:${[...u.name].length > 10 ? 13 : 15}px">${esc(u.name)}</div><div class="scn" id="scn${i}">0</div><div class="pips" id="pips${i}"></div></div></div>`;
   $('#pods').innerHTML = pod(A, 0) + pod(B, 1);
   if (!mcAvaDone) { $('#mcAva').innerHTML = avatar(MC_LOOK, 'happy', true); mcAvaDone = true }
 }
 function setExpr(i, u, e) { const el = $('#ava' + i); if (el) el.innerHTML = avatar(u.look, e) }
 function setPips(score, target) {
-  for (const i of [0, 1]) $('#pips' + i).innerHTML = Array.from({ length: target }, (_, k) => `<i class="${k < score[i] ? 'on' : ''}"></i>`).join('');
+  for (const i of [0, 1]) { $('#pips' + i).innerHTML = Array.from({ length: target }, (_, k) => `<i class="${k < score[i] ? 'on' : ''}"></i>`).join(''); $('#scn' + i).textContent = score[i] }
 }
 function mc(text) { $('#mcLine').innerHTML = `<div><small>${t('mc')}</small>${esc(text)}</div>` }
 function bubble(i, text) { const b = $('#bub' + i); if (!b) return; b.textContent = text; b.classList.toggle('on', !!text) }
@@ -551,6 +596,7 @@ function judgeMark(ok) {
 async function playMatch(A, B, res, opt) {
   show('studio');
   S.skip = false;
+  $('#endBan').className = 'endban';
   const P = [A, B];
   setPods(A, B, opt.round);
   const target = res.log[0].target;
@@ -628,9 +674,24 @@ async function playMatch(A, B, res, opt) {
   $('#bSkip').disabled = true;
   const champ = opt.final && P[end.winner] === S.me;
   mc(t(opt.final ? 'mcChamp' : 'mcWin', { a: P[end.winner].name }));
+  // 勝ち負けをひと目で分かるように。勝った席は光ってハンコ、負けた席は灰色
+  const W = end.winner, Lo = 1 - W;
+  $('#pod' + W).classList.add('win'); $('#pod' + Lo).classList.add('lose');
+  $('#stamp' + W).textContent = t('stampWin'); $('#stamp' + Lo).textContent = t('stampLose');
+  const meIdx = P[0] === S.me ? 0 : P[1] === S.me ? 1 : -1;
+  const ban = $('#endBan');
+  if (S.mode === 'vs' || meIdx < 0) {
+    $('#ebMain').textContent = t('banVs'); $('#ebSub').textContent = t('banVsSub', { w: P[W].name, s: `${score[W]}-${score[Lo]}` }); ban.className = 'endban win on';
+  } else {
+    const won = meIdx === W;
+    $('#ebMain').textContent = won ? t(champ ? 'banChamp' : 'banAdv') : t('banLose');
+    $('#ebSub').textContent = `${P[meIdx].name} ${score[meIdx]} - ${score[1 - meIdx]} ${P[1 - meIdx].name}`;
+    ban.className = 'endban on ' + (won ? (champ ? 'champ' : 'win') : 'lose');
+  }
   if (P[end.winner] === S.me || S.mode === 'vs') Snd.fanfare(); else Snd.sad();
   if (champ) confetti(3.5);
-  await wait(wasSkip ? 1500 : 2600);
+  await wait(wasSkip ? 1800 : 2800);
+  ban.className = 'endban';
   Snd.bgmOn = false;
 }
 
@@ -647,6 +708,8 @@ function showResult() {
     S.lastResult = { vs: true, w, l, s, rankLabel: t('rank.vs') };
     $('#rRank').className = 'rank'; $('#rRank').style.fontSize = [...rank].length > 8 ? 'clamp(28px,8vw,48px)' : '';
     $('#rCard').innerHTML = profCard(w);
+    $('#rLost').textContent = '';
+    $('#rRec').innerHTML = `<div class="rr w"><span class="mk">${t('recW')}</span><span></span><span class="op">${esc(w.name)}</span><b>${s}</b></div><div class="rr l"><span class="mk">${t('recL')}</span><span></span><span class="op">${esc(l.name)}</span><b>${s.split('-').reverse().join('-')}</b></div>`;
   } else {
     const cup = S.cup, d = S.me.dev;
     const key = cup.champ ? 'champ' : ['r8', 'r4', 'r2'][cup.out];
@@ -655,8 +718,13 @@ function showResult() {
     share = t('shareCup', { n: S.me.name, r: rank, d, k: SKILLS[lang][S.me.skill][0] });
     $('#rName').textContent = S.me.name;
     S.lastResult = { vs: false, u: S.me, key, rankLabel: rank };
-    $('#rRank').className = 'rank' + (key === 'champ' ? ' champ' : ''); $('#rRank').style.fontSize = '';
+    $('#rRank').className = 'rank' + (key === 'champ' ? ' champ' : ' lost'); $('#rRank').style.fontSize = '';
     $('#rCard').innerHTML = profCard(S.me);
+    // 自分の試合を1行ずつ。どこで誰に負けたかを文で出す
+    const mine = cup.rounds.map((ms, R) => { const m = ms && ms.find(x => x.mine && x.done); if (!m) return null; const i = m.a === S.me ? 0 : 1; return { R, opp: i ? m.a : m.b, my: m.score[i], op: m.score[1 - i], won: m.w === S.me } }).filter(Boolean);
+    $('#rRec').innerHTML = mine.map(x => `<div class="rr ${x.won ? 'w' : 'l'}"><span class="mk">${t(x.won ? 'recW' : 'recL')}</span><span>${esc(t('rounds')[x.R])}</span><span class="op">${esc(t('vsOpp', { o: x.opp.name }))}</span><b>${x.my}-${x.op}</b></div>`).join('');
+    const lost = mine.find(x => !x.won);
+    $('#rLost').textContent = lost ? t('lostTo', { r: t('rounds')[lost.R], o: lost.opp.name, s: `${lost.my}-${lost.op}` }) : t('allWin');
     const order = { champ: 4, r2: 3, r4: 2, r8: 1 };
     try {
       const prev = JSON.parse(localStorage.getItem('qk.best') || 'null');
@@ -665,9 +733,60 @@ function showResult() {
   }
   S.lastResult.share = share;
   $('#rPre').textContent = pre; $('#rRank').textContent = rank; $('#rComment').textContent = comment;
+  const kind = vs ? 'vs' : S.lastResult.key;
+  $('#rEmblem').innerHTML = EMBLEM[kind === 'vs' ? 'champ' : kind];
+  $('#rStamp').textContent = { r2: t('stR2'), r4: t('stR4'), r8: t('stR8'), vs: t('stVs') }[kind] || '';
   show('vResult');
-  requestAnimationFrame(() => requestAnimationFrame(() => { for (const i of document.querySelectorAll('#rCard .bar i')) i.style.width = i.dataset.w + '%' }));
-  if (!vs && S.cup.champ) confetti(4);
+  revealResult(kind, pre);
+}
+
+// ---------- 結果発表の演出。幕が開いて、順位がドンと出る
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const medal = (c1, c2, n) => `<path d="M38 6h16l8 34H46zM82 6H66l-8 34h16z" fill="#d6342b"/><path d="M46 6h8l8 34h-8zM66 6h8l-8 34h-8z" fill="#f2c230" opacity=".8"/>
+  <circle cx="60" cy="76" r="34" fill="${c2}"/><circle cx="60" cy="76" r="28" fill="${c1}"/><circle cx="60" cy="76" r="28" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-dasharray="3 4"/>
+  <text x="60" y="90" text-anchor="middle" font-size="40" font-family="Dela Gothic One,sans-serif" fill="${c2}">${n}</text>`;
+const EMBLEM = {
+  champ: `<path d="M30 14h60v20a30 30 0 0 1-60 0z" fill="#f2c230"/><path d="M30 20H14a16 16 0 0 0 18 22M90 20h16a16 16 0 0 1-18 22" fill="none" stroke="#f2c230" stroke-width="7"/>
+    <path d="M38 18h10v22a12 12 0 0 1-10-10z" fill="#fff4c2" opacity=".7"/><rect x="53" y="62" width="14" height="20" fill="#d9a520"/>
+    <rect x="36" y="82" width="48" height="10" rx="3" fill="#f2c230"/><rect x="28" y="92" width="64" height="16" rx="4" fill="#7a5a10"/><rect x="40" y="96" width="40" height="8" rx="2" fill="#f2c230"/>
+    <path d="M60 24l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#fff"/>`,
+  r2: medal('#e4e8f0', '#8e97aa', '2'),
+  r4: medal('#eaa673', '#8f5126', '4'),
+  r8: `<g transform="rotate(-20 60 60)"><rect x="18" y="52" width="40" height="18" fill="#f2c230"/><rect x="18" y="52" width="40" height="6" fill="#ffd95e"/><rect x="10" y="52" width="10" height="18" rx="3" fill="#f08aa0"/><rect x="18" y="52" width="6" height="18" fill="#b9b9c4"/>
+    <path d="M58 52l4 5-3 3 4 3-5 7" fill="none" stroke="#141626" stroke-width="2.5" stroke-linejoin="round"/></g>
+    <g transform="rotate(25 60 60)"><rect x="66" y="56" width="26" height="18" fill="#f2c230"/><rect x="66" y="56" width="26" height="6" fill="#ffd95e"/><path d="M92 56l16 9-16 9z" fill="#f1d3a8"/><path d="M103 62l5 3-5 3z" fill="#141626"/>
+    <path d="M66 56l-4 6 3 3-3 3 4 6" fill="none" stroke="#141626" stroke-width="2.5" stroke-linejoin="round"/></g>
+    <path d="M44 30l4 8M60 24v9M76 30l-4 8" stroke="#cfe0ff" stroke-width="4" stroke-linecap="round"/>`,
+};
+let revealId = 0;
+async function revealResult(kind, pre) {
+  const id = ++revealId, win = kind === 'champ' || kind === 'vs';
+  const seq = [...document.querySelectorAll('#vResult .seq')];
+  for (const el of seq) el.classList.remove('in', 'slam', 'drop');
+  $('#rStamp').className = 'rstamp'; $('#rEmb').classList.toggle('rays', win);
+  for (const i of document.querySelectorAll('#rCard .bar i')) i.style.width = '0';
+  const rv = $('#reveal'); rv.hidden = false; rv.className = 'reveal';
+  $('#rvTitle').innerHTML = `<small>${esc(pre)}</small>${esc(t('rvTitle'))}`;
+  Snd.drum(1.5);
+  await sleep(1500); if (id !== revealId) return;
+  rv.classList.add('open'); Snd.curtain();
+  setTimeout(() => { if (id === revealId) rv.hidden = true }, 1300);
+  await sleep(550); if (id !== revealId) return;
+  const put = async (sel, cls = 'in', ms = 170) => { const el = $(sel); if (el) el.classList.add(cls); await sleep(ms) };
+  await put('#rPre'); await put('#rEmb', 'in', 240); await put('#rName', 'in', 260);
+  if (win) {
+    await put('#rRank', 'slam', 0); Snd.fanfare(); confetti(4.5); document.body.classList.add('party');
+    setTimeout(() => document.body.classList.remove('party'), 4000);
+  } else {
+    await put('#rRank', 'drop', 0); Snd.slide();
+    setTimeout(() => { if (id !== revealId) return; const w = $('#rWrap'); w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake'); Snd.bonk() }, 520);
+  }
+  await sleep(850); if (id !== revealId) return;
+  if ($('#rStamp').textContent) { $('#rStamp').classList.add('on'); Snd.stamp() }
+  await sleep(300);
+  for (const sel of ['#rLost', '#rRec', '#rComment', '#rCard']) await put(sel, 'in', 140);
+  for (const i of document.querySelectorAll('#rCard .bar i')) i.style.width = i.dataset.w + '%';
+  for (const el of seq) if (!el.classList.contains('in') && !el.classList.contains('slam') && !el.classList.contains('drop')) el.classList.add('in');
 }
 function baseUrl() { const u = location.href.split('#')[0].split('?')[0]; return /^https?:/.test(u) ? u : 'https://tom3games.github.io/quizking/' }
 function shareUrl() {
@@ -733,7 +852,7 @@ async function saveImage2() {
   } catch (e) { if (e && e.name === 'AbortError') return }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'quizking.png'; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 1500);
-  const b = $('#bImg'); b.textContent = t('saved'); setTimeout(() => b.textContent = t('img'), 1800);
+  const b = $('#bImgT'); b.textContent = t('saved'); setTimeout(() => b.textContent = t('img'), 1800);
 }
 
 // ---------- 紙吹雪
@@ -758,7 +877,7 @@ function confetti(sec) {
 
 // ---------- 画面のつなぎ
 function startFromEntry() {
-  const n1 = normName($('#in1').value), n2 = normName($('#in2').value);
+  const n1 = fullName($('#in1').value), n2 = fullName($('#in2').value);
   if (!n1 || (S.mode === 'vs' && !n2)) return;
   Snd.init();
   S.me = makeUni(n1);
@@ -812,7 +931,7 @@ function bind() {
   on('#bBack2', () => { show('vEntry'); setupEntry(S.mode, true) });
   on('#bGo', onGo);
   on('#bFight', onFight);
-  on('#bFast', () => { S.speed = S.speed > 1 ? 1 : 3; $('#bFast').textContent = S.speed > 1 ? t('normal') : t('fast') });
+  on('#bFast', () => { S.speed = S.speed > 1 ? 1 : 3; $('#bFastT').textContent = S.speed > 1 ? t('normal') : t('fast') });
   on('#bSkip', () => { S.skip = true });
   on('#bPost', postX);
   on('#bImg', saveImage);
@@ -828,6 +947,8 @@ function bind() {
   });
   $('#eForm').addEventListener('submit', e => { e.preventDefault(); startFromEntry() });
   $('#in1').addEventListener('input', updatePreview); $('#in2').addEventListener('input', updatePreview);
+  // 「大学」まで打ってしまった人は、入力欄を離れた時点で取り除く（固定表示と二重にしない）
+  for (const id of ['#in1', '#in2']) $(id).addEventListener('blur', e => { const v = stripSuffix(e.target.value); if (v !== normName(e.target.value)) e.target.value = v })
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (S.view === 'studio' && (e.key === ' ' || e.key === 'f')) { e.preventDefault(); $('#bFast').click() }
@@ -840,13 +961,21 @@ function bind() {
 }
 
 try { if (localStorage.getItem('qk.mute') === '1') { Snd.muted = true; $('#icOn').hidden = true; $('#icOff').hidden = false } } catch (e) {}
+// 客席のシルエット（背景の最下段）
+(function crowd() {
+  const r = rng(7), el = $('#crowd'); el.setAttribute('preserveAspectRatio', 'xMidYMax slice');
+  let back = '', front = '';
+  for (let x = -10; x < 1220; x += 26 + r() * 10) { const h = 46 + r() * 14; back += `<circle cx="${x}" cy="${100 - h}" r="${11 + r() * 3}"/><rect x="${x - 17}" y="${100 - h + 12}" width="34" height="${h}" rx="14"/>` }
+  for (let x = 0; x < 1220; x += 34 + r() * 12) { const h = 30 + r() * 12; front += `<circle cx="${x}" cy="${100 - h}" r="${13 + r() * 3}"/><rect x="${x - 21}" y="${100 - h + 14}" width="42" height="${h}" rx="16"/>` }
+  el.innerHTML = `<g fill="#1b2366">${back}</g><g fill="#070a24">${front}</g>`;
+})();
 bind(); show('vTitle'); applyTexts();
 // 共有URLから来た人は、同じ名前が入った入力画面から始める
 try {
   const qs = new URLSearchParams(location.search), a = normName(qs.get('a')), b = normName(qs.get('b')), u = normName(qs.get('u'));
-  if (a && b) { show('vEntry'); setupEntry('vs'); $('#in1').value = a; $('#in2').value = b; updatePreview() }
-  else if (u) { show('vEntry'); setupEntry('cup'); $('#in1').value = u; updatePreview() }
+  if (a && b) { show('vEntry'); setupEntry('vs'); $('#in1').value = stripSuffix(a); $('#in2').value = stripSuffix(b); updatePreview() }
+  else if (u) { show('vEntry'); setupEntry('cup'); $('#in1').value = stripSuffix(u); updatePreview() }
 } catch (e) {}
-window.qk = { S, T, vsSim, makeUni, simMatch, hash, flipRes, setLang: l => { lang = l; applyTexts() }, D };
+window.qk = { S, T, vsSim, fullName, makeUni, simMatch, hash, flipRes, setLang: l => { lang = l; applyTexts() }, D };
 window.__qkReady = true;
 })();
