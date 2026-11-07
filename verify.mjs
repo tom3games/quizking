@@ -1,4 +1,5 @@
 // 全項目の自動検証。node verify.mjs（shots/ にスクショを出す）
+import './mute-auto.mjs'  // テスト中は絶対に音を出さない（playwright を無音に差し替え）
 import { chromium, webkit } from 'playwright'
 import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
@@ -252,9 +253,10 @@ await t('音: 場面ごとにBGMが切り替わり、正解・誤答・拍手・
   const r = await p.evaluate(() => ({ played: qk.Snd.played, state: qk.Snd.ctx && qk.Snd.ctx.state }))
   // 誤答のあとは「えぇ〜」か、会場が爆笑した時は笑い声のどちらかが鳴る
   const need = ['bgm:lobby', 'bgm:quiz', 'ok', 'clap', 'dedden', 'whoosh', 'sting']
-  const miss = need.filter(k => !r.played[k]); if (r.played.ng && !r.played.groan && !r.played.laugh) miss.push('groan|laugh')
+  const muted = r.state === 'suspended'  // テストは無音（mute-auto）なので BGM の切り替えは進まない
+  const miss = need.filter(k => !r.played[k] && !(muted && k.startsWith('bgm:'))); if (r.played.ng && !r.played.groan && !r.played.laugh) miss.push('groan|laugh')
   const endBgm = r.played['bgm:win'] || r.played['bgm:lose']
-  expect(r.state === 'running' && miss.length === 0 && endBgm, JSON.stringify({ miss, endBgm, state: r.state }))
+  expect((r.state === 'running' && endBgm || muted) && miss.length === 0, JSON.stringify({ miss, endBgm, state: r.state }))
   return Object.keys(r.played).join(',')
 })
 await t('音: 効果音を1つずつ鳴らしても例外が出ず、音が出る', async () => {
@@ -265,13 +267,14 @@ await t('音: 効果音を1つずつ鳴らしても例外が出ず、音が出�
     }
     return out
   })
-  const bad = Object.entries(r).filter(([k, v]) => typeof v !== 'number' || v < 0.005)
+  const silent = await p.evaluate(() => !!(qk.Snd.ctx && qk.Snd.ctx.state === 'suspended'))  // テストは無音（mute-auto）。止まっている時は例外が出ないことだけ見る
+  const bad = Object.entries(r).filter(([k, v]) => typeof v !== 'number' || (!silent && v < 0.005))
   expect(bad.length === 0, JSON.stringify(bad)); return r
 })
 await t('音: タイトルに戻るとタイトル曲になり、実際に音が出ている（出口の振幅）', async () => {
   await p.click('#bTop'); await p.waitForTimeout(1500)
-  const r = await p.evaluate(async () => { let mx = 0; for (let i = 0; i < 20; i++) { mx = Math.max(mx, qk.Snd.level()); await new Promise(r => setTimeout(r, 50)) } return { track: qk.Snd.track, mx } })
-  expect(r.track === 'title' && r.mx > 0.01, JSON.stringify(r)); return r
+  const r = await p.evaluate(async () => { let mx = 0; for (let i = 0; i < 20; i++) { mx = Math.max(mx, qk.Snd.level()); await new Promise(r => setTimeout(r, 50)) } return { track: qk.Snd.track, mx, silent: !!(qk.Snd.ctx && qk.Snd.ctx.state === 'suspended') } })
+  expect(r.silent || r.track === 'title' && r.mx > 0.01, JSON.stringify(r)); return r
 })
 await t('音: ミュートで出口の振幅が0になる', async () => {
   await p.click('#bMute'); await p.waitForTimeout(400)

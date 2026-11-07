@@ -1,4 +1,5 @@
 // 公開URLの確認。node live.mjs（ログインしていないブラウザで見る）
+import './mute-auto.mjs'  // テスト中は絶対に音を出さない（playwright を無音に差し替え）
 import { chromium, webkit } from 'playwright'
 import { execSync } from 'node:child_process'
 // 個人のアカウント名は公開リポジトリに書かない。実行時に gh から取る
