@@ -61,7 +61,7 @@ body.party #stage .crowd{animation:cheer .35s ease-in-out infinite alternate}
 @keyframes cheer{to{transform:translateY(-6px)}}
 
 /* ---------- 共通 */
-.view{min-height:100svh;display:flex;flex-direction:column;align-items:center;padding:max(68px,calc(env(safe-area-inset-top) + 60px)) 16px max(28px,calc(env(safe-area-inset-bottom) + 16px));gap:16px}
+.view{min-height:100svh;display:flex;flex-direction:column;align-items:center;padding:max(68px,calc(env(safe-area-inset-top) + 60px)) 16px max(28px,calc(calc(env(safe-area-inset-bottom) + var(--inapp-bot,0px)) + 16px));gap:16px}
 .wrap{width:min(560px,100%);display:flex;flex-direction:column;align-items:center;gap:16px}
 .view:not([hidden]) .wrap{animation:enter .35s cubic-bezier(.2,.8,.2,1) both}
 @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -468,6 +468,6 @@ body.party #stage .crowd{animation:cheer .35s ease-in-out infinite alternate}
 </script>
 <script src="data.js?v=3"></script>
 <script src="game.js?v=3"></script>
-<script src="support.js?v=4" data-ja="学食" data-en="a campus lunch"></script>
+<script src="support.js?v=5" data-ja="学食" data-en="a campus lunch"></script>
 </body>
 </html>
